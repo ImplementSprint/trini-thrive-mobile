@@ -116,7 +116,7 @@ permissions:
 
 jobs:
   call-orchestrator:
-    uses: ImplementSprint/central-workflow/.github/workflows/master-pipeline-mobile.yml@main
+    uses: ImplementSprint/central-workflow/.github/workflows/master-pipeline-mobile.yml@fix/ios-simulator-runtime-detection
     with:
       pipeline_mode: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.pipeline_mode || 'auto' }}
       stack_filter: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.stack_filter || 'all' }}
