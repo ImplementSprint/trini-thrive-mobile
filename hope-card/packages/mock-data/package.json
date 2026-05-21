@@ -1,0 +1,11 @@
+{
+  "name": "@digdon/mock-data",
+  "version": "0.0.0",
+  "main": "./campaigns.ts",
+  "exports": {
+    ".": "./campaigns.ts"
+  },
+  "dependencies": {
+    "@digdon/ui": "*"
+  }
+}
