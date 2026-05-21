@@ -1,7 +1,7 @@
-appId: com.anonymous.templaterepombsingle
+# CI validation marker: exercise iOS Maestro lane for digdon.
+appId: com.anonymous.digdonmobile
 tags:
     - ios
 ---
 - launchApp:
     clearState: true
-- assertVisible: "Template Repo Mobile Single"

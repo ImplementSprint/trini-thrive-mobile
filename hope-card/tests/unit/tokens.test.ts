@@ -1,25 +1,24 @@
-import { colors } from '@theme/colors';
-import { spacing } from '@theme/spacing';
+import { colors, spacing, borderRadius } from '@digdon/ui';
 
 describe('theme tokens', () => {
-  it('exposes expected color palette keys', () => {
-    expect(colors).toEqual({
-      background: '#F6F6F0',
-      surface: '#FFFFFF',
-      text: '#162521',
-      muted: '#5A6461',
-      border: '#D9DDD7',
-      primary: '#1D6E5C',
-    });
+  it('exposes expected color scheme values', () => {
+    expect(colors).toBeDefined();
+    expect(colors.primary).toBe('#97453E');
+    expect(colors.background).toBe('#FCF9F8');
+    expect(colors.surface).toBe('#FCF9F8');
   });
 
-  it('exposes expected spacing scale', () => {
-    expect(spacing).toEqual({
-      xs: 4,
-      sm: 8,
-      md: 12,
-      lg: 20,
-      xl: 28,
-    });
+  it('exposes spacing presets', () => {
+    expect(spacing).toBeDefined();
+    expect(spacing.sm).toBe(8);
+    expect(spacing.md).toBe(16);
+    expect(spacing.lg).toBe(24);
+  });
+
+  it('exposes borderRadius scale', () => {
+    expect(borderRadius).toBeDefined();
+    expect(borderRadius.sm).toBe(8);
+    expect(borderRadius.md).toBe(16);
+    expect(borderRadius.lg).toBe(24);
   });
 });

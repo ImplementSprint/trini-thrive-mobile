@@ -2,26 +2,26 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "allowJs": false,
-    "noUncheckedIndexedAccess": true,
-    "baseUrl": ".",
-    "types": ["jest", "node"],
     "paths": {
-      "@app/*": ["src/bootstrap/*"],
-      "@config/*": ["src/config/*"],
-      "@features/*": ["src/features/*"],
-      "@navigation/*": ["src/navigation/*"],
-      "@theme/*": ["src/theme/*"],
-      "@utils/*": ["src/utils/*"]
+      "@/*": [
+        "./*"
+      ],
+      "@digdon/ui": [
+        "./packages/ui"
+      ],
+      "@digdon/ui/*": [
+        "./packages/ui/*"
+      ],
+      "@digdon/mock-data": [
+        "./packages/mock-data"
+      ],
+      "@digdon/mock-data/*": [
+        "./packages/mock-data/*"
+      ]
     }
   },
   "include": [
-    "App.tsx",
-    "index.ts",
-    "eslint.config.ts",
-    "jest.config.ts",
-    "src",
-    "tests",
-    "scripts"
+    "**/*.ts",
+    "**/*.tsx"
   ]
 }

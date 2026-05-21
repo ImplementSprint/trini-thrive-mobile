@@ -1,7 +1,8 @@
-node_modules
-.expo
-coverage
-*.log
-android
-ios
-coverage
+node_modules/
+.expo/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+coverage/
+dist/

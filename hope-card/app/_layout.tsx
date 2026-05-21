@@ -1,0 +1,68 @@
+import { useEffect } from 'react';
+import { Stack, SplashScreen } from 'expo-router';
+import { useFonts, PlusJakartaSans_400Regular, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold } from '@expo-google-fonts/plus-jakarta-sans';
+import { Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold } from '@expo-google-fonts/manrope';
+
+export {
+  // Catch any errors thrown by the Layout component.
+  ErrorBoundary,
+} from 'expo-router';
+
+export const unstable_settings = {
+  // Ensure that reloading on `/modal` keeps a back button present.
+  initialRouteName: '(tabs)',
+};
+
+// Prevent the splash screen from auto-hiding before asset loading is complete.
+SplashScreen.preventAutoHideAsync();
+
+export default function RootLayout() {
+  const [loaded, error] = useFonts({
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
+    Manrope_400Regular,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
+    Manrope_800ExtraBold,
+  });
+
+  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
+  useEffect(() => {
+    if (error) {
+      console.error('Font loading error:', error);
+      throw error;
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (loaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded]);
+
+  if (!loaded) {
+    return null;
+  }
+
+  return <RootLayoutNav />;
+}
+
+function RootLayoutNav() {
+  return (
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Donate' }} />
+      <Stack.Screen name="checkout" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="confirmation" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="history" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="forgot-password" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="forgot-password-otp" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="notifications" options={{ presentation: 'modal', headerShown: false }} />
+    </Stack>
+  );
+}
