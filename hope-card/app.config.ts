@@ -1,9 +1,11 @@
 import type { ExpoConfig } from 'expo/config';
-import { withGradleProperties } from 'expo/config-plugins';
+import { withGradleProperties, withDangerousMod } from 'expo/config-plugins';
+import * as fs from 'fs';
+import * as path from 'path';
 
 type RuntimeEnvironment = 'development' | 'staging' | 'production';
 
-const defaultAppName = 'Template Repo Mobile Single';
+const defaultAppName = 'digdon Mobile';
 const defaultEnvironment: RuntimeEnvironment = 'development';
 const defaultApiBaseUrl = 'https://api.example.com';
 const kotlinVersion = '2.0.21';
@@ -33,6 +35,56 @@ function withCiKotlinGradleProperty(config: ExpoConfig): ExpoConfig {
   });
 }
 
+function withXcodeBuildPhaseFix(config: ExpoConfig): ExpoConfig {
+  return withDangerousMod(config, [
+    'ios',
+    async (cfg) => {
+      const podfilePath = path.join(
+        cfg.modRequest.platformProjectRoot,
+        'Podfile'
+      );
+      if (fs.existsSync(podfilePath)) {
+        let podfileContent = await fs.promises.readFile(podfilePath, 'utf8');
+
+        const fixBlock = [
+          '',
+          '    # Fix Xcode always_out_of_date warnings for Pods and Main project',
+          '    installer.pods_project.targets.each do |target|',
+          '      target.build_phases.each do |phase|',
+          '        if phase.respond_to?(:always_out_of_date)',
+          "          phase.always_out_of_date = '1'",
+          '        end',
+          '      end',
+          '    end',
+          '    installer.pods_project.save',
+          '',
+          '    installer.aggregate_targets.each do |aggregate_target|',
+          '      project = aggregate_target.user_project',
+          '      project.targets.each do |target|',
+          '        target.build_phases.each do |phase|',
+          '          if phase.respond_to?(:always_out_of_date)',
+          "            phase.always_out_of_date = '1'",
+          '          end',
+          '        end',
+          '      end',
+          '      project.save',
+          '    end',
+          ''
+        ].join('\n');
+
+        if (!podfileContent.includes('Fix Xcode always_out_of_date warnings')) {
+          podfileContent = podfileContent.replace(
+            /post_install do \|installer\|/,
+            'post_install do |installer|' + fixBlock
+          );
+          await fs.promises.writeFile(podfilePath, podfileContent, 'utf8');
+        }
+      }
+      return cfg;
+    },
+  ]);
+}
+
 function resolveEnvironment(value: string | undefined): RuntimeEnvironment {
   if (value && allowedEnvironments.has(value as RuntimeEnvironment)) {
     return value as RuntimeEnvironment;
@@ -46,22 +98,22 @@ export default function getExpoConfig(): ExpoConfig {
   const environment = resolveEnvironment(process.env.EXPO_PUBLIC_APP_ENV);
   const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? defaultApiBaseUrl;
 
-  return withCiKotlinGradleProperty({
+  return withXcodeBuildPhaseFix(withCiKotlinGradleProperty({
     name: appName,
-    slug: 'template-repo-mobile-single',
+    slug: 'digdon-mobile',
     version: '1.0.0',
     orientation: 'portrait',
-    scheme: 'templatemobilesingle',
+    scheme: 'digdonmobile',
     userInterfaceStyle: 'automatic',
     jsEngine: 'hermes',
     experiments: {
       tsconfigPaths: true,
     },
     android: {
-      package: 'com.anonymous.templaterepombsingle',
+      package: 'com.anonymous.digdonmobile',
     },
     ios: {
-      bundleIdentifier: 'com.anonymous.templaterepombsingle',
+      bundleIdentifier: 'com.anonymous.digdonmobile',
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },
@@ -81,5 +133,5 @@ export default function getExpoConfig(): ExpoConfig {
       environment,
       apiBaseUrl,
     },
-  });
+  }));
 }
