@@ -28,6 +28,9 @@ export const MaterialSymbols: React.FC<MaterialSymbolsProps> = ({
     'person': 'account',
     'close': 'close',
     'lock_person': 'lock',
+    'lock': 'lock-outline',
+    'mail': 'email-outline',
+    'location': 'map-marker-outline',
     'schedule': 'clock-outline',
     'arrow_forward': 'arrow-right',
     'support_agent': 'headphones',
@@ -62,10 +65,18 @@ export const MaterialSymbols: React.FC<MaterialSymbolsProps> = ({
     'add': 'plus',
     'volunteer_activism': 'heart-multiple',
     'public': 'earth',
+    'visibility': 'eye',
+    'visibility_off': 'eye-off',
+    'check_box': 'checkbox-marked',
+    'check_box_outline_blank': 'checkbox-blank-outline',
+    'delete': 'delete',
+    'download_for_offline': 'download',
+    'policy': 'shield-text',
+    'gavel': 'gavel',
   };
 
   const iconName = iconMap[name] || 'help-circle';
-  const finalIconName = fill && !iconName.endsWith('-outline') ? iconName : iconName;
+  const finalIconName = fill && iconName.endsWith('-outline') ? iconName.slice(0, -8) : iconName;
 
   return (
     <MaterialCommunityIcons 

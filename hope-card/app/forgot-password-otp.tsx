@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, spacing } from '@digdon/ui';
+import { colors, spacing, borderRadius } from '@digdon/ui';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { HButton } from '@/components/ui/HButton';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
@@ -9,6 +9,28 @@ import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
 export default function ForgotPasswordOTPScreen() {
   const router = useRouter();
   const [focusedOtp, setFocusedOtp] = React.useState<number | null>(null);
+  const [otp, setOtp] = React.useState(['', '', '', '', '', '']);
+  const inputRefs = React.useRef<(TextInput | null)[]>([]);
+
+  const handleChangeText = (text: string, index: number) => {
+    const cleanedText = text.replace(/[^0-9]/g, '');
+    const newOtp = [...otp];
+    newOtp[index] = cleanedText;
+    setOtp(newOtp);
+
+    if (cleanedText && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyPress = (e: any, index: number) => {
+    if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
+      const newOtp = [...otp];
+      newOtp[index - 1] = '';
+      setOtp(newOtp);
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
 
   return (
     <SafeLayout hideHeader>
@@ -26,64 +48,66 @@ export default function ForgotPasswordOTPScreen() {
             <MaterialSymbols name="close" size={24} color={colors.onSurface} strokeWidth={2} />
           </TouchableOpacity>
 
-          <View style={styles.mainContent}>
-            {/* Titles */}
+          {/* Header */}
+          <View style={styles.header}>
             <Text style={styles.title}>Verification Code</Text>
             <Text style={styles.subtitle}>
-              Enter the 6-digit code sent to your email{' '}
+              Enter the 6-digit code sent to your email{'\n'}
               <Text style={styles.boldEmail}>h***y@hopecard.org</Text>
             </Text>
+          </View>
 
-            {/* OTP Input Section */}
-            <View style={styles.otpGrid}>
+          {/* OTP Input Card */}
+          <View style={styles.otpCard}>
+            <View style={styles.otpRow}>
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <TextInput
                   key={i}
+                  ref={(ref) => { inputRefs.current[i - 1] = ref; }}
                   style={[styles.otpInput, focusedOtp === i && styles.otpInputFocused]}
                   maxLength={1}
                   keyboardType="number-pad"
                   placeholder="0"
-                  placeholderTextColor={colors.onSurfaceVariant + '40'}
+                  placeholderTextColor={colors.outlineVariant}
+                  value={otp[i - 1]}
+                  onChangeText={(text) => handleChangeText(text, i - 1)}
+                  onKeyPress={(e) => handleKeyPress(e, i - 1)}
                   onFocus={() => setFocusedOtp(i)}
                   onBlur={() => setFocusedOtp(null)}
                 />
               ))}
             </View>
 
-            {/* Resend Action */}
-            <View style={styles.resendContainer}>
-              <Text style={styles.resendLabel}>Didn't receive the code?</Text>
+            <View style={styles.timerSection}>
+              <View style={styles.timerRow}>
+                <MaterialSymbols name="schedule" size={16} color={colors.onSurfaceVariant} />
+                <Text style={styles.timerText}>Resend code in <Text style={styles.primaryText}>00:54</Text></Text>
+              </View>
               <TouchableOpacity>
-                <Text style={styles.resendLink}>Resend code in 00:54</Text>
+                <Text style={styles.resendButton}>Resend Code</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Verify Button */}
-            <HButton 
-              title="Verify & Continue" 
-              onPress={() => router.replace('/(tabs)/home')} // End of flow
+            <HButton
+              title="Verify & Continue"
+              onPress={() => router.replace('/(tabs)/home')}
               size="lg"
-              style={styles.verifyButton}
+              icon={<MaterialSymbols name="arrow_forward" size={20} color={colors.onPrimaryContainer} />}
+              style={styles.submitButton}
             />
+          </View>
 
-            {/* Secondary Global Actions */}
-            <View style={styles.actionsRow}>
-              <TouchableOpacity style={styles.actionItem}>
-                <MaterialSymbols name="help" size={20} color={colors.onSurfaceVariant} fill />
-                <Text style={styles.actionText}>Get Help</Text>
-              </TouchableOpacity>
-              <View style={styles.actionDivider} />
-              <TouchableOpacity style={styles.actionItem} onPress={() => router.replace('/(auth)/login')}>
-                <MaterialSymbols name="logout" size={20} color={colors.onSurfaceVariant} />
-                <Text style={styles.actionText}>Sign Out</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Security Note */}
-            <View style={styles.securityNote}>
-              <MaterialSymbols name="verified_user" size={16} color={colors.secondary} fill />
-              <Text style={styles.securityText}>SECURE 256-BIT ENCRYPTION</Text>
-            </View>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <TouchableOpacity style={styles.footerItem}>
+              <MaterialSymbols name="support_agent" size={18} color={colors.onSurfaceVariant} />
+              <Text style={styles.footerItemText}>Get Help</Text>
+            </TouchableOpacity>
+            <View style={styles.divider} />
+            <TouchableOpacity style={styles.footerItem} onPress={() => router.replace('/(auth)/login')}>
+              <MaterialSymbols name="logout" size={18} color={colors.onSurfaceVariant} />
+              <Text style={styles.footerItemText}>Sign Out</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </View>
@@ -134,65 +158,59 @@ const styles = StyleSheet.create({
     elevation: 2,
     marginBottom: 20,
   },
-  mainContent: {
+  header: {
     alignItems: 'center',
-    width: '100%',
-  },
-  iconCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: colors.primaryContainer + '1A', // 10% opacity
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: colors.secondary,
+    color: colors.primary,
     fontFamily: 'PlusJakartaSans_800ExtraBold',
     textAlign: 'center',
-    marginBottom: 12,
-    letterSpacing: -1,
   },
   subtitle: {
     fontSize: 16,
     color: colors.onSurfaceVariant,
     textAlign: 'center',
+    marginTop: spacing.md,
     lineHeight: 24,
     fontFamily: 'Manrope_500Medium',
-    paddingHorizontal: 20,
-    marginBottom: 48,
   },
   boldEmail: {
     fontWeight: '700',
     color: colors.onSurface,
   },
-  otpGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    backgroundColor: colors.surfaceContainerLowest,
-    borderRadius: 24,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    marginBottom: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 10,
+  otpCard: {
+    backgroundColor: 'white',
+    borderRadius: borderRadius.md,
+    padding: spacing.lg,
     borderWidth: 1,
     borderColor: 'rgba(218, 193, 190, 0.15)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 20,
+    elevation: 2,
+    alignItems: 'center',
+  },
+  otpRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: spacing.xl,
+    width: '100%',
   },
   otpInput: {
-    width: 40,
-    height: 64,
+    width: 44,
+    height: 56,
+    backgroundColor: colors.surfaceContainerHighest,
+    borderRadius: borderRadius.sm,
     textAlign: 'center',
-    fontSize: 32,
-    fontWeight: '800',
-    color: colors.primaryContainer,
-    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.onSurface,
+    fontFamily: 'PlusJakartaSans_700Bold',
     borderWidth: 1,
     borderColor: 'transparent',
   },
@@ -200,77 +218,53 @@ const styles = StyleSheet.create({
     borderColor: colors.outlineFocus,
     borderWidth: 2,
   },
-  resendContainer: {
+  timerSection: {
     alignItems: 'center',
-    gap: 4,
-    marginBottom: 48,
+    gap: spacing.sm,
+    marginBottom: spacing.xl,
   },
-  resendLabel: {
+  timerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  timerText: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.onSurfaceVariant,
-    fontFamily: 'Manrope_500Medium',
   },
-  resendLink: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: colors.secondary,
-    fontFamily: 'PlusJakartaSans_700Bold',
-    textDecorationLine: 'underline',
+  primaryText: {
+    color: colors.primary,
   },
-  verifyButton: {
-    width: '100%',
-    height: 64,
-    borderRadius: 18,
-    backgroundColor: colors.primaryContainer,
-    shadowColor: colors.primaryContainer,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
-    elevation: 4,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 24,
-    marginTop: 64,
-  },
-  actionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 8,
-  },
-  actionText: {
+  resendButton: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.onSurfaceVariant,
-    fontFamily: 'Manrope_500Medium',
+    color: colors.primary,
   },
-  actionDivider: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.outlineVariant + '4D', // 30% opacity
+  submitButton: {
+    width: '100%',
+    height: 60,
   },
-  securityNote: {
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing.xxl,
+    gap: spacing.lg,
+  },
+  footerItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: colors.surfaceContainerLow,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 99,
-    marginTop: 32,
-    borderWidth: 1,
-    borderColor: 'rgba(218, 193, 190, 0.1)',
   },
-  securityText: {
-    fontSize: 10,
-    fontWeight: '800',
+  footerItemText: {
+    fontSize: 14,
+    fontWeight: '600',
     color: colors.onSurfaceVariant,
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
+  },
+  divider: {
+    width: 1,
+    height: 16,
+    backgroundColor: colors.outlineVariant,
   },
 });
