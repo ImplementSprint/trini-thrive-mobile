@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, spacing, borderRadius } from '@digdon/ui';
+import { colors } from '@digdon/ui';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
 
