@@ -30,6 +30,7 @@ jest.mock('expo/config-plugins', () => ({
 
     return config;
   },
+  withDangerousMod: (config: unknown) => config,
 }));
 
 function loadExpoConfig() {
