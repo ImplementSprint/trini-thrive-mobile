@@ -1,4 +1,4 @@
-import { Children, isValidElement } from 'react';
+import { Children, isValidElement, ReactElement } from 'react';
 
 import { HomeScreen } from '../../src/features/home/screens/HomeScreen';
 
@@ -12,26 +12,26 @@ jest.mock('@config/appConfig', () => ({
 
 describe('HomeScreen', () => {
   it('renders expected root and text content', () => {
-    const element = HomeScreen();
+    const element = HomeScreen() as ReactElement<{ children?: React.ReactNode; testID?: string }>;
 
     expect(isValidElement(element)).toBe(true);
     expect(element.props.testID).toBe('home-screen-root');
 
-    const children = Children.toArray(element.props.children).filter(isValidElement);
+    const children = Children.toArray(element.props.children).filter(isValidElement) as ReactElement<any>[];
     expect(children).toHaveLength(4);
 
-    const title = children[0];
-    const subtitle = children[1];
-    const badge = children[2];
-    const smokeMarker = children[3];
+    const title = children[0]!;
+    const subtitle = children[1]!;
+    const badge = children[2]!;
+    const smokeMarker = children[3]!;
 
     expect(title.props.testID).toBe('home-title');
     expect(title.props.children).toBe('Template Repo Mobile Single');
     expect(subtitle.props.children).toBe('Single-root Expo boilerplate (TypeScript-first)');
 
-    const badgeChildren = Children.toArray(badge.props.children).filter(isValidElement);
+    const badgeChildren = Children.toArray(badge.props.children).filter(isValidElement) as ReactElement<any>[];
     expect(badgeChildren).toHaveLength(1);
-    expect(badgeChildren[0].props.children).toEqual(['Environment: ', 'development']);
+    expect(badgeChildren[0]!.props.children).toEqual(['Environment: ', 'development']);
 
     expect(smokeMarker.props.testID).toBe('maestro-smoke-ready');
     expect(smokeMarker.props.children).toBe('MAESTRO_SMOKE_READY');
