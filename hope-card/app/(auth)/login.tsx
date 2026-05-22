@@ -108,11 +108,7 @@ export default function LoginScreen() {
           <View style={styles.socialGrid}>
             <TouchableOpacity style={styles.socialButton}>
               <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png' }} style={styles.socialIcon} />
-              <Text style={styles.socialButtonText}>Google</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.socialButton}>
-              <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/0/747.png' }} style={styles.socialIcon} />
-              <Text style={styles.socialButtonText}>Apple</Text>
+              <Text style={styles.socialButtonText}>Continue with Google</Text>
             </TouchableOpacity>
           </View>
 
