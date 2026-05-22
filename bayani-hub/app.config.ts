@@ -5,7 +5,7 @@ import * as path from 'path';
 
 type RuntimeEnvironment = 'development' | 'staging' | 'production';
 
-const defaultAppName = 'Bayani Hub';
+const defaultAppName = 'Template Repo Mobile Single';
 const defaultEnvironment: RuntimeEnvironment = 'development';
 const defaultApiBaseUrl = 'https://api.example.com';
 const kotlinVersion = '2.0.21';
@@ -49,59 +49,34 @@ function withXcodeBuildPhaseFix(config: ExpoConfig): ExpoConfig {
         const fixBlock = [
           '',
           '    # Fix Xcode always_out_of_date warnings for Pods and Main project',
-          '    begin',
-          '      if defined?(installer) && installer',
-          '        if installer.respond_to?(:pods_project) && installer.pods_project',
-          '          installer.pods_project.targets.each do |target|',
-          '            if target.respond_to?(:build_phases) && target.build_phases',
-          '              target.build_phases.each do |phase|',
-          '                if phase.respond_to?(:always_out_of_date)',
-          "                  phase.always_out_of_date = '1'",
-          '                end',
-          '              end',
-          '            end',
-          '          end',
-          '          installer.pods_project.save',
+          '    installer.pods_project.targets.each do |target|',
+          '      target.build_phases.each do |phase|',
+          '        if phase.respond_to?(:always_out_of_date)',
+          "          phase.always_out_of_date = '1'",
           '        end',
+          '      end',
+          '    end',
+          '    installer.pods_project.save',
           '',
-          '        if installer.respond_to?(:aggregate_targets) && installer.aggregate_targets',
-          '          installer.aggregate_targets.each do |aggregate_target|',
-          '            if aggregate_target.respond_to?(:user_project) && aggregate_target.user_project',
-          '              project = aggregate_target.user_project',
-          '              if project.respond_to?(:targets) && project.targets',
-          '                project.targets.each do |target|',
-          '                  if target.respond_to?(:build_phases) && target.build_phases',
-          '                    target.build_phases.each do |phase|',
-          '                      if phase.respond_to?(:always_out_of_date)',
-          "                        phase.always_out_of_date = '1'",
-          '                      end',
-          '                    end',
-          '                  end',
-          '                end',
-          '                project.save',
-          '              end',
-          '            end',
+          '    installer.aggregate_targets.each do |aggregate_target|',
+          '      project = aggregate_target.user_project',
+          '      project.targets.each do |target|',
+          '        target.build_phases.each do |phase|',
+          '          if phase.respond_to?(:always_out_of_date)',
+          "            phase.always_out_of_date = '1'",
           '          end',
           '        end',
           '      end',
-          '    rescue => e',
-          '      puts "Warning: Could not apply Xcode always_out_of_date warning fix: #{e.message}"',
+          '      project.save',
           '    end',
           ''
         ].join('\n');
 
         if (!podfileContent.includes('Fix Xcode always_out_of_date warnings')) {
           podfileContent = podfileContent.replace(
-            /post_install\s+do\s+\|installer\|/,
+            /post_install do \|installer\|/,
             'post_install do |installer|' + fixBlock
           );
-          // Also fallback to literal search just in case
-          if (!podfileContent.includes('Fix Xcode always_out_of_date warnings')) {
-            podfileContent = podfileContent.replace(
-              'post_install do |installer|',
-              'post_install do |installer|' + fixBlock
-            );
-          }
           await fs.promises.writeFile(podfilePath, podfileContent, 'utf8');
         }
       }
@@ -125,20 +100,20 @@ export default function getExpoConfig(): ExpoConfig {
 
   return withXcodeBuildPhaseFix(withCiKotlinGradleProperty({
     name: appName,
-    slug: 'bayani-hub',
+    slug: 'template-repo-mobile-single',
     version: '1.0.0',
     orientation: 'portrait',
-    scheme: 'bayanihub',
+    scheme: 'templatemobilesingle',
     userInterfaceStyle: 'automatic',
     jsEngine: 'hermes',
     experiments: {
       tsconfigPaths: true,
     },
     android: {
-      package: 'com.anonymous.bayanihub',
+      package: 'com.anonymous.templaterepombsingle',
     },
     ios: {
-      bundleIdentifier: 'com.anonymous.bayanihub',
+      bundleIdentifier: 'com.anonymous.templaterepombsingle',
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },
