@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, spacing, borderRadius } from '@digdon/ui';
 import { SafeLayout } from '@/components/layout/SafeLayout';
@@ -97,33 +97,20 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          {/* App Preferences */}
-          <View style={styles.section}>
-            <Text style={styles.sectionHeader}>App Preferences</Text>
-            <View style={styles.menuCard}>
-              <PreferenceItem 
-                icon="dark_mode" 
-                title="Theme" 
-                value="Light Mode" 
-              />
-              <View style={styles.divider} />
-              <PreferenceItem 
-                icon="language" 
-                title="Language" 
-                value="English (US)" 
-              />
-            </View>
-          </View>
 
           {/* Legal & Support */}
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>Legal & Support</Text>
             <View style={styles.menuCard}>
-              <LegalItem title="Help Center" icon="help_center" />
+              <LegalItem 
+                title="Privacy Policy" 
+                imageSource={require('../../assets/images/privacy_policy.png')} 
+              />
               <View style={styles.divider} />
-              <LegalItem title="Privacy Policy" icon="policy" />
-              <View style={styles.divider} />
-              <LegalItem title="Terms of Service" icon="gavel" />
+              <LegalItem 
+                title="Terms of Service" 
+                imageSource={require('../../assets/images/terms_of_service.png')} 
+              />
             </View>
           </View>
 
@@ -145,28 +132,15 @@ export default function ProfileScreen() {
   );
 }
 
-function PreferenceItem({ icon, title, value }: any) {
-  return (
-    <TouchableOpacity style={styles.menuItem}>
-      <View style={styles.menuItemLeft}>
-        <View style={styles.menuIconCircle}>
-          <MaterialSymbols name={icon} size={22} color={colors.primaryContainer} />
-        </View>
-        <View>
-          <Text style={styles.menuItemTitle}>{title}</Text>
-          <Text style={styles.menuItemValue}>{value}</Text>
-        </View>
-      </View>
-      <MaterialSymbols name="chevron_right" size={24} color={colors.outlineVariant} />
-    </TouchableOpacity>
-  );
-}
-
-function LegalItem({ title, icon }: any) {
+function LegalItem({ title, icon, imageSource }: any) {
   return (
     <TouchableOpacity style={styles.menuItem}>
       <Text style={styles.legalTitle}>{title}</Text>
-      <MaterialSymbols name={icon} size={24} color={colors.primaryContainer} />
+      {imageSource ? (
+        <Image source={imageSource} style={styles.legalIcon} resizeMode="contain" />
+      ) : (
+        <MaterialSymbols name={icon} size={24} color={colors.primaryContainer} />
+      )}
     </TouchableOpacity>
   );
 }
@@ -333,6 +307,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.onSurface,
     fontFamily: 'PlusJakartaSans_700Bold',
+  },
+  legalIcon: {
+    width: 24,
+    height: 24,
+    tintColor: colors.primaryContainer,
   },
   signOutBtn: {
     backgroundColor: colors.secondary,

@@ -12,6 +12,7 @@ export default function SignUpScreen() {
   const router = useRouter();
   const [showPassword, setShowPassword] = React.useState(false);
   const [focusedInput, setFocusedInput] = React.useState<string | null>(null);
+  const [agreed, setAgreed] = React.useState(false);
 
   return (
     <SafeLayout hideHeader>
@@ -49,13 +50,23 @@ export default function SignUpScreen() {
 
           {/* Form */}
           <View style={styles.form}>
-            <InputGroup label="Full Name" icon="person" placeholder="Evelyn Harper" focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="fullName" />
+            <InputGroup label="First Name" icon="person" placeholder="Evelyn" focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="firstName" />
+            <InputGroup label="Last Name" icon="person" placeholder="Harper" focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="lastName" />
             <InputGroup label="Email Address" icon="mail" placeholder="name@example.com" keyboardType="email-address" focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="email" />
+            <InputGroup label="Barangay" icon="location" placeholder="Enter barangay" focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="barangay" />
+            <InputGroup label="Municipality" icon="location" placeholder="Enter municipality" focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="municipality" />
+            <InputGroup label="Province" icon="location" placeholder="Enter province" focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="province" />
             <View style={styles.inputGroup}>
               <View style={styles.labelRow}>
-                <Text style={styles.label}>Password</Text>
+                <Text style={styles.label}>Password<Text style={styles.asterisk}> *</Text></Text>
               </View>
               <View style={[styles.inputWrapper, focusedInput === 'password' && styles.inputWrapperFocused]}>
+                <MaterialSymbols 
+                  name="lock" 
+                  size={20} 
+                  color={colors.outline} 
+                  style={styles.inputIcon} 
+                />
                 <TextInput 
                   style={styles.input}
                   placeholder="••••••••"
@@ -67,7 +78,7 @@ export default function SignUpScreen() {
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                   <MaterialSymbols 
                     name={showPassword ? "visibility_off" : "visibility"} 
-                    size={24} 
+                    size={20} 
                     color={colors.onSurfaceVariant} 
                   />
                 </TouchableOpacity>
@@ -75,7 +86,7 @@ export default function SignUpScreen() {
             </View>
             
             <View style={styles.fileUpload}>
-              <Text style={styles.label}>Valid ID</Text>
+              <Text style={styles.label}>Valid ID<Text style={styles.asterisk}> *</Text></Text>
               <TouchableOpacity style={styles.uploadButton}>
                 <Text style={styles.uploadText}>Upload ID (JPG, PNG, PDF)</Text>
               </TouchableOpacity>
@@ -86,6 +97,7 @@ export default function SignUpScreen() {
               onPress={() => router.push('/(auth)/verify')} 
               size="lg"
               style={styles.submitButton}
+              disabled={!agreed}
             />
           </View>
 
@@ -100,18 +112,25 @@ export default function SignUpScreen() {
           <View style={styles.socialGrid}>
             <TouchableOpacity style={styles.socialButton}>
               <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png' }} style={styles.socialIcon} />
-              <Text style={styles.socialButtonText}>Google</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.socialButton}>
-              <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/0/747.png' }} style={styles.socialIcon} />
-              <Text style={styles.socialButtonText}>Apple</Text>
+              <Text style={styles.socialButtonText}>Continue with Google</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Legal Note */}
-          <Text style={styles.footerText}>
-            By continuing, you agree to Hopecard's <Text style={styles.link}>Terms of Service</Text> and <Text style={styles.link}>Privacy Policy</Text>.
-          </Text>
+          {/* Legal Note with Checkbox */}
+          <TouchableOpacity 
+            style={styles.checkboxContainer} 
+            onPress={() => setAgreed(!agreed)}
+            activeOpacity={0.7}
+          >
+            <MaterialSymbols 
+              name={agreed ? "check_box" : "check_box_outline_blank"} 
+              size={24} 
+              color={agreed ? colors.primary : colors.outline} 
+            />
+            <Text style={styles.checkboxText}>
+              By continuing, you agree to Hopecard's <Text style={styles.link}>Terms of Service</Text> and <Text style={styles.link}>Privacy Policy</Text>.<Text style={styles.asterisk}> *</Text>
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
 
         {/* Support Help Trigger */}
@@ -123,11 +142,19 @@ export default function SignUpScreen() {
   );
 }
 
-function InputGroup({ label, focusedInput, setFocusedInput, inputId, ...props }: any) {
+function InputGroup({ label, icon, focusedInput, setFocusedInput, inputId, ...props }: any) {
   return (
     <View style={styles.inputGroup}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label}>{label}<Text style={styles.asterisk}> *</Text></Text>
       <View style={[styles.inputWrapper, focusedInput === inputId && styles.inputWrapperFocused]}>
+        {icon && (
+          <MaterialSymbols 
+            name={icon} 
+            size={20} 
+            color={colors.outline} 
+            style={styles.inputIcon} 
+          />
+        )}
         <TextInput 
           style={styles.input}
           placeholderTextColor={colors.outlineVariant}
@@ -350,10 +377,28 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontFamily: 'Manrope_500Medium',
   },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 40,
+    paddingHorizontal: 4,
+  },
+  checkboxText: {
+    flex: 1,
+    fontSize: 12,
+    color: colors.outline,
+    lineHeight: 18,
+    fontFamily: 'Manrope_500Medium',
+  },
   link: {
     color: colors.primary,
     fontWeight: '700',
     textDecorationLine: 'underline',
+  },
+  asterisk: {
+    color: '#D32F2F',
+    fontWeight: 'bold',
   },
   supportFab: {
     position: 'absolute',

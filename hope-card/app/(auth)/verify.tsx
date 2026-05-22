@@ -9,6 +9,28 @@ import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
 export default function VerifyScreen() {
   const router = useRouter();
   const [focusedOtp, setFocusedOtp] = React.useState<number | null>(null);
+  const [otp, setOtp] = React.useState(['', '', '', '', '', '']);
+  const inputRefs = React.useRef<(TextInput | null)[]>([]);
+
+  const handleChangeText = (text: string, index: number) => {
+    const cleanedText = text.replace(/[^0-9]/g, '');
+    const newOtp = [...otp];
+    newOtp[index] = cleanedText;
+    setOtp(newOtp);
+
+    if (cleanedText && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyPress = (e: any, index: number) => {
+    if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
+      const newOtp = [...otp];
+      newOtp[index - 1] = '';
+      setOtp(newOtp);
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
 
   return (
     <SafeLayout hideHeader>
@@ -31,11 +53,15 @@ export default function VerifyScreen() {
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <TextInput
                 key={i}
+                ref={(ref) => { inputRefs.current[i - 1] = ref; }}
                 style={[styles.otpInput, focusedOtp === i && styles.otpInputFocused]}
                 maxLength={1}
                 keyboardType="number-pad"
                 placeholder="0"
                 placeholderTextColor={colors.outlineVariant}
+                value={otp[i - 1]}
+                onChangeText={(text) => handleChangeText(text, i - 1)}
+                onKeyPress={(e) => handleKeyPress(e, i - 1)}
                 onFocus={() => setFocusedOtp(i)}
                 onBlur={() => setFocusedOtp(null)}
               />
