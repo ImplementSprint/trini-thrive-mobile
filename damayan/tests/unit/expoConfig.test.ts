@@ -30,7 +30,15 @@ jest.mock('expo/config-plugins', () => ({
 
     return config;
   },
-  withDangerousMod: (config: unknown) => config,
+  withDangerousMod: (config: unknown, [platform, action]: [string, (cfg: any) => Promise<any>]) => {
+    const mockCfg = {
+      modRequest: {
+        platformProjectRoot: '/dummy-path',
+      }
+    };
+    action(mockCfg).catch(() => {});
+    return config;
+  },
 }));
 
 function loadExpoConfig() {
@@ -58,9 +66,9 @@ describe('getExpoConfig', () => {
     const getExpoConfig = loadExpoConfig();
     const config = getExpoConfig();
 
-    expect(config.name).toBe('Template Repo Mobile Single');
+    expect(config.name).toBe('Damayan');
     expect(config.extra).toEqual({
-      appName: 'Template Repo Mobile Single',
+      appName: 'Damayan',
       environment: 'development',
       apiBaseUrl: 'https://api.example.com',
     });
