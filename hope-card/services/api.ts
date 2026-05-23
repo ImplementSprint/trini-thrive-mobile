@@ -19,6 +19,19 @@ export class ApiError extends Error {
   }
 }
 
+async function handleResponse<T>(res: Response): Promise<T> {
+  if (res.status === 401) {
+    _onUnauthorized?.();
+    throw new ApiError(401, 'Unauthorized');
+  }
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ message: res.statusText }));
+    throw new ApiError(res.status, body.message ?? res.statusText);
+  }
+  if (res.status === 204) return undefined as T;
+  return res.json();
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {},
@@ -38,18 +51,7 @@ async function request<T>(
 
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
 
-  if (res.status === 401) {
-    _onUnauthorized?.();
-    throw new ApiError(401, 'Unauthorized');
-  }
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ message: res.statusText }));
-    throw new ApiError(res.status, body.message ?? res.statusText);
-  }
-
-  if (res.status === 204) return undefined as T;
-  return res.json();
+  return handleResponse<T>(res);
 }
 
 export function apiGet<T>(path: string, authenticated = true): Promise<T> {
@@ -87,15 +89,5 @@ export async function apiUpload<T>(
 
   const res = await fetch(`${BASE_URL}${path}`, { method: 'POST', headers, body: form });
 
-  if (res.status === 401) {
-    _onUnauthorized?.();
-    throw new ApiError(401, 'Unauthorized');
-  }
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ message: res.statusText }));
-    throw new ApiError(res.status, body.message ?? res.statusText);
-  }
-
-  return res.json();
+  return handleResponse<T>(res);
 }
