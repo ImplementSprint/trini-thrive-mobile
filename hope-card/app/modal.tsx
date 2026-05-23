@@ -38,7 +38,7 @@ export default function DonationModal() {
         {/* Campaign Hero Card */}
         <View style={styles.heroWrapper}>
           <ImageBackground
-            source={{ uri: campaign.image }}
+            source={{ uri: campaign.cover_image_url ?? undefined }}
             style={styles.heroBackground}
             imageStyle={{ borderRadius: 24 }}
           >

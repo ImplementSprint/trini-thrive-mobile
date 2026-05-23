@@ -15,13 +15,13 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
   campaign, 
   onPress 
 }) => {
-  const progress = campaign.target > 0 ? campaign.raised / campaign.target : 0;
+  const progress = campaign.progress_pct / 100;
 
   return (
     <TouchableOpacity onPress={() => onPress(campaign.id)} activeOpacity={0.9} style={styles.touchable}>
       <HCard style={styles.card}>
         <View style={styles.imageContainer}>
-          <Image source={{ uri: campaign.image }} style={styles.image} />
+          <Image source={{ uri: campaign.cover_image_url ?? undefined }} style={styles.image} />
           <View style={styles.categoryOverlay}>
             <Text style={styles.categoryOverlayText}>{campaign.category}</Text>
           </View>
@@ -36,7 +36,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
           <View style={styles.progressContainer}>
             <ProgressBar progress={progress} height={4} />
             <View style={styles.footerRow}>
-              <Text style={styles.raisedValue}>${campaign.raised.toLocaleString()}</Text>
+              <Text style={styles.raisedValue}>₱{campaign.collected_amount.toLocaleString()}</Text>
               <TouchableOpacity onPress={() => onPress(campaign.id)}>
                 <Text style={styles.supportLink}>Support</Text>
               </TouchableOpacity>

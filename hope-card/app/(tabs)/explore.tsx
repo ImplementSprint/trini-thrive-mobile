@@ -78,7 +78,7 @@ export default function ExploreScreen() {
           activeOpacity={0.9}
         >
           <View style={styles.featuredImageContainer}>
-            <Image source={{ uri: featuredCampaign.image }} style={styles.featuredImage} />
+            <Image source={{ uri: featuredCampaign.cover_image_url ?? undefined }} style={styles.featuredImage} />
             <View style={styles.featuredGradient} />
             <View style={styles.featuredBadge}>
               <Text style={styles.featuredBadgeText}>FEATURED</Text>
@@ -96,7 +96,7 @@ export default function ExploreScreen() {
             <View style={styles.featuredStats}>
               <View style={styles.featuredProgressRow}>
                 <Text style={styles.featuredRaisedText}>
-                  ₱{featuredCampaign.raised.toLocaleString()} <Text style={styles.featuredGoalLabel}>raised</Text>
+                  ₱{featuredCampaign.collected_amount.toLocaleString()} <Text style={styles.featuredGoalLabel}>raised</Text>
                 </Text>
                 <Text style={styles.featuredPercentText}>82%</Text>
               </View>
