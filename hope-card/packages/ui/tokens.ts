@@ -1,0 +1,45 @@
+export const colors = {
+  primary:           '#97453E',
+  primaryContainer:  '#F28D83',
+  onPrimaryContainer:'#6E2621',
+  secondary:         '#A8372C',
+  background:        '#FCF9F8',
+  surface:           '#FCF9F8',
+  onSurface:         '#1B1C1B',
+  onSurfaceVariant:  '#554240',
+  surfaceContainerLow:    '#F6F3F2',
+  surfaceContainerLowest: '#FFFFFF',
+  surfaceContainerHigh:   '#EAE7E7',
+  outlineVariant:    '#DAC1BE',
+  outlineFocus:      '#D4A9A3',
+  tertiary:          '#775A00',
+  tertiaryContainer: '#CDA336',
+  error:             '#BA1A1A',
+  onError:           '#FFFFFF',
+  errorContainer:    '#FFDAD6',
+  onErrorContainer:  '#93000A',
+  surfaceContainerHighest: '#F0ECEB',
+  outline:           '#8F7D7A',
+  onTertiary:        '#FFFFFF',
+  secondaryContainer: '#FFDAD4',
+  primaryFixed:      '#F28D83',
+  onPrimaryFixedVariant: '#6E2621',
+  tertiaryFixed:     '#CDA336',
+};
+
+export const spacing = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
+};
+
+export const borderRadius = {
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  full: 9999,
+};
