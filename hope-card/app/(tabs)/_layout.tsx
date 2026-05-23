@@ -3,8 +3,15 @@ import React from 'react';
 import { Platform, View, Text } from 'react-native';
 import { colors } from '@digdon/ui';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
+import { Redirect } from 'expo-router';
+import { useAuthContext } from '../../context/AuthContext';
 
 export default function TabLayout() {
+  const { user, isLoading } = useAuthContext();
+
+  if (isLoading) return null;
+  if (!user) return <Redirect href="/(auth)/login" />;
+
   return (
     <Tabs
       screenOptions={{
