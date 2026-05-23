@@ -5,12 +5,33 @@ import { colors, spacing, borderRadius } from '@digdon/ui';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { HButton } from '@/components/ui/HButton';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
+import { useAuth } from '../../hooks/useAuth';
+import { useAuthContext } from '../../context/AuthContext';
 
 export default function VerifyScreen() {
   const router = useRouter();
   const [focusedOtp, setFocusedOtp] = React.useState<number | null>(null);
   const [otp, setOtp] = React.useState(['', '', '', '', '', '']);
   const inputRefs = React.useRef<(TextInput | null)[]>([]);
+  const { verifyEmail } = useAuth();
+  const { user } = useAuthContext();
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  async function handleVerify() {
+    const otpString = otp.join('');
+    if (otpString.length !== 6 || !user?.email) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await verifyEmail(user.email, otpString);
+      router.replace('/(tabs)/home');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Verification failed');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleChangeText = (text: string, index: number) => {
     const cleanedText = text.replace(/[^0-9]/g, '');
@@ -78,9 +99,15 @@ export default function VerifyScreen() {
             </TouchableOpacity>
           </View>
 
+          {error && (
+            <Text style={{ color: 'red', fontSize: 13, textAlign: 'center', fontFamily: 'Manrope_500Medium', marginBottom: 8 }}>
+              {error}
+            </Text>
+          )}
           <HButton
-            title="Verify & Continue"
-            onPress={() => router.push('/(tabs)/home')}
+            title={loading ? 'Verifying...' : 'Verify & Continue'}
+            onPress={handleVerify}
+            disabled={loading}
             size="lg"
             icon={<MaterialSymbols name="arrow_forward" size={20} color={colors.onPrimaryContainer} />}
             style={styles.submitButton}
