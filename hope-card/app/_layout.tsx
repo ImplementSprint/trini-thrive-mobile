@@ -1,20 +1,19 @@
 import { useEffect } from 'react';
 import { Stack, SplashScreen } from 'expo-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts, PlusJakartaSans_400Regular, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold } from '@expo-google-fonts/plus-jakarta-sans';
 import { Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold } from '@expo-google-fonts/manrope';
+import { AuthProvider } from '../context/AuthContext';
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
+export { ErrorBoundary } from 'expo-router';
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: '(tabs)',
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -29,7 +28,6 @@ export default function RootLayout() {
     Manrope_800ExtraBold,
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) {
       console.error('Font loading error:', error);
@@ -47,7 +45,13 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <RootLayoutNav />
+      </AuthProvider>
+    </QueryClientProvider>
+  );
 }
 
 function RootLayoutNav() {

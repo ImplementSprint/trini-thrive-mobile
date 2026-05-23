@@ -152,6 +152,7 @@ export default function getExpoConfig(): ExpoConfig {
           },
         },
       ],
+      'expo-secure-store',
     ],
     extra: {
       appName,

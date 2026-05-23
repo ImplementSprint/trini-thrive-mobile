@@ -1,16 +1,68 @@
 import React from 'react';
 import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors, spacing, borderRadius } from '@digdon/ui';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { HButton } from '@/components/ui/HButton';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
+import { useAuth } from '../hooks/useAuth';
+
+function maskEmail(email: string): string {
+  const [local, domain] = email.split('@');
+  const masked = local[0] + '***' + (local.length > 1 ? local[local.length - 1] : '');
+  return `${masked}@${domain}`;
+}
 
 export default function ForgotPasswordOTPScreen() {
   const router = useRouter();
   const [focusedOtp, setFocusedOtp] = React.useState<number | null>(null);
   const [otp, setOtp] = React.useState(['', '', '', '', '', '']);
   const inputRefs = React.useRef<(TextInput | null)[]>([]);
+  const { verifyOtp, resetPassword } = useAuth();
+  const { email } = useLocalSearchParams<{ email: string }>();
+  const [step, setStep] = React.useState<'otp' | 'reset'>('otp');
+  const [resetToken, setResetToken] = React.useState('');
+  const [newPassword, setNewPassword] = React.useState('');
+  const [confirmPassword, setConfirmPassword] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  async function handleVerifyOtp() {
+    const otpString = otp.join('');
+    if (otpString.length !== 6 || !email) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await verifyOtp(email, otpString);
+      setResetToken(res.reset_token);
+      setStep('reset');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Invalid OTP');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleResetPassword() {
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      await resetPassword(resetToken, newPassword);
+      router.replace('/(auth)/login');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Password reset failed');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleChangeText = (text: string, index: number) => {
     const cleanedText = text.replace(/[^0-9]/g, '');
@@ -53,11 +105,12 @@ export default function ForgotPasswordOTPScreen() {
             <Text style={styles.title}>Verification Code</Text>
             <Text style={styles.subtitle}>
               Enter the 6-digit code sent to your email{'\n'}
-              <Text style={styles.boldEmail}>h***y@hopecard.org</Text>
+              <Text style={styles.boldEmail}>{email ? maskEmail(email) : 'your email'}</Text>
             </Text>
           </View>
 
           {/* OTP Input Card */}
+          {step === 'otp' && (
           <View style={styles.otpCard}>
             <View style={styles.otpRow}>
               {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -88,14 +141,45 @@ export default function ForgotPasswordOTPScreen() {
               </TouchableOpacity>
             </View>
 
+            {error && (
+              <Text style={{ color: 'red', fontSize: 13, textAlign: 'center', fontFamily: 'Manrope_500Medium', marginBottom: 8 }}>
+                {error}
+              </Text>
+            )}
             <HButton
-              title="Verify & Continue"
-              onPress={() => router.replace('/(tabs)/home')}
+              title={loading ? 'Verifying...' : 'Verify & Continue'}
+              onPress={handleVerifyOtp}
+              disabled={loading}
               size="lg"
               icon={<MaterialSymbols name="arrow_forward" size={20} color={colors.onPrimaryContainer} />}
               style={styles.submitButton}
             />
           </View>
+          )}
+
+          {step === 'reset' && (
+            <View style={{ gap: 16, marginTop: 24 }}>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: colors.onSurface, textAlign: 'center', fontFamily: 'PlusJakartaSans_700Bold' }}>
+                Set New Password
+              </Text>
+              <TextInput
+                value={newPassword}
+                onChangeText={setNewPassword}
+                placeholder="New password"
+                secureTextEntry
+                style={{ backgroundColor: colors.surfaceContainerHighest, borderRadius: 18, padding: 18, fontSize: 16, color: colors.onSurface, fontFamily: 'Manrope_500Medium' }}
+              />
+              <TextInput
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="Confirm password"
+                secureTextEntry
+                style={{ backgroundColor: colors.surfaceContainerHighest, borderRadius: 18, padding: 18, fontSize: 16, color: colors.onSurface, fontFamily: 'Manrope_500Medium' }}
+              />
+              {error && <Text style={{ color: 'red', fontSize: 13, textAlign: 'center' }}>{error}</Text>}
+              <HButton title={loading ? 'Resetting...' : 'Reset Password'} onPress={handleResetPassword} size="lg" disabled={loading} />
+            </View>
+          )}
 
           {/* Footer */}
           <View style={styles.footer}>

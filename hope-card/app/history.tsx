@@ -1,29 +1,16 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, spacing } from '@digdon/ui';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
+import { usePurchases } from '../hooks/usePurchases';
 
 export default function CompleteHistoryScreen() {
   const router = useRouter();
   const [filter, setFilter] = React.useState('all');
-
-  const historyItems = [
-    { id: '1', title: 'Emergency Relief Fund', date: 'Oct 24, 2023', amount: '₱14,250', status: 'Processed', icon: 'medical_services', type: 'donation' },
-    { id: '2', title: 'Rural Education Fund', date: 'Oct 12, 2023', amount: '₱10,000', status: 'Processed', icon: 'school', type: 'donation' },
-    { id: '3', title: 'Donation Bonus', date: 'Oct 10, 2023', amount: '+500 pts', status: 'Awarded', icon: 'stars', type: 'point' },
-    { id: '4', title: 'Reforestation Project', date: 'Sep 28, 2023', amount: '₱5,000', status: 'Processed', icon: 'forest', type: 'donation' },
-    { id: '5', title: 'Daily Impact Login', date: 'Sep 27, 2023', amount: '+20 pts', status: 'Awarded', icon: 'auto_awesome', type: 'point' },
-    { id: '6', title: 'Ocean Cleanup Drive', date: 'Sep 15, 2023', amount: '₱2,500', status: 'Processed', icon: 'waves', type: 'donation' },
-  ];
-
-  const filteredItems = historyItems.filter(item => {
-    if (filter === 'all') return true;
-    if (filter === 'donations') return item.type === 'donation';
-    if (filter === 'points') return item.type === 'point';
-    return true;
-  });
+  const { history } = usePurchases();
+  const purchases = history.data ?? [];
 
   return (
     <SafeLayout hideHeader>
@@ -61,31 +48,36 @@ export default function CompleteHistoryScreen() {
             ))}
           </View>
 
+          {history.isLoading && (
+            <View style={{ padding: 32, alignItems: 'center' }}>
+              <ActivityIndicator color={colors.primary} />
+            </View>
+          )}
           <View style={styles.list}>
-            {filteredItems.map((item) => (
-              <View key={item.id} style={styles.historyItem}>
+            {purchases.map((purchase) => (
+              <View key={purchase.id} style={styles.historyItem}>
                 <View style={styles.historyLeft}>
-                  <View style={[styles.historyIcon, item.type === 'point' && styles.pointIconBg]}>
-                    <MaterialSymbols 
-                      name={item.icon} 
-                      size={24} 
-                      color={item.type === 'point' ? colors.tertiary : colors.primary} 
-                      fill 
+                  <View style={styles.historyIcon}>
+                    <MaterialSymbols
+                      name="volunteer_activism"
+                      size={24}
+                      color={colors.primary}
+                      fill
                     />
                   </View>
                   <View>
-                    <Text style={styles.historyTitle}>{item.title}</Text>
-                    <Text style={styles.historyDate}>{item.date}</Text>
+                    <Text style={styles.historyTitle}>{purchase.hopecard.campaign.title}</Text>
+                    <Text style={styles.historyDate}>{new Date(purchase.purchased_at).toLocaleDateString()}</Text>
                   </View>
                 </View>
                 <View style={styles.historyRight}>
-                  <Text style={[styles.historyAmount, item.type === 'point' && styles.pointText]}>
-                    {item.amount}
+                  <Text style={styles.historyAmount}>
+                    ₱{purchase.amount_paid.toLocaleString()}
                   </Text>
                   <View style={styles.statusRow}>
-                    <View style={[styles.statusDot, item.type === 'point' && { backgroundColor: colors.tertiary }]} />
-                    <Text style={[styles.statusText, item.type === 'point' && { color: colors.tertiary }]}>
-                      {item.status}
+                    <View style={styles.statusDot} />
+                    <Text style={styles.statusText}>
+                      {purchase.status}
                     </Text>
                   </View>
                 </View>
