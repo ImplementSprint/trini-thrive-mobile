@@ -8,6 +8,12 @@ import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
 import { useAuth } from '../../hooks/useAuth';
 import { useAuthContext } from '../../context/AuthContext';
 
+function maskEmail(email: string): string {
+  const [local, domain] = email.split('@');
+  const masked = local[0] + '***' + (local.length > 1 ? local[local.length - 1] : '');
+  return `${masked}@${domain}`;
+}
+
 export default function VerifyScreen() {
   const router = useRouter();
   const [focusedOtp, setFocusedOtp] = React.useState<number | null>(null);
@@ -64,7 +70,7 @@ export default function VerifyScreen() {
           <Text style={styles.title}>Verification Code</Text>
           <Text style={styles.subtitle}>
             Enter the 6-digit code sent to your email{'\n'}
-            <Text style={styles.boldEmail}>h***y@hopecard.org</Text>
+            <Text style={styles.boldEmail}>{user?.email ? maskEmail(user.email) : 'your email'}</Text>
           </Text>
         </View>
 

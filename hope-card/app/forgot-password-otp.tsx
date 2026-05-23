@@ -7,6 +7,12 @@ import { HButton } from '@/components/ui/HButton';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
 import { useAuth } from '../hooks/useAuth';
 
+function maskEmail(email: string): string {
+  const [local, domain] = email.split('@');
+  const masked = local[0] + '***' + (local.length > 1 ? local[local.length - 1] : '');
+  return `${masked}@${domain}`;
+}
+
 export default function ForgotPasswordOTPScreen() {
   const router = useRouter();
   const [focusedOtp, setFocusedOtp] = React.useState<number | null>(null);
@@ -99,7 +105,7 @@ export default function ForgotPasswordOTPScreen() {
             <Text style={styles.title}>Verification Code</Text>
             <Text style={styles.subtitle}>
               Enter the 6-digit code sent to your email{'\n'}
-              <Text style={styles.boldEmail}>h***y@hopecard.org</Text>
+              <Text style={styles.boldEmail}>{email ? maskEmail(email) : 'your email'}</Text>
             </Text>
           </View>
 
