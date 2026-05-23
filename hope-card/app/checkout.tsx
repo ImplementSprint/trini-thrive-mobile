@@ -5,11 +5,45 @@ import { colors, spacing, borderRadius } from '@digdon/ui';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { useCart } from '../hooks/useCart';
+import { useProfile } from '../hooks/useProfile';
+import { usePurchases } from '../hooks/usePurchases';
+import * as WebBrowser from 'expo-web-browser';
 
 export default function CheckoutScreen() {
   const router = useRouter();
-  const [selectedMethod, setSelectedMethod] = useState('card');
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const { cartQuery } = useCart();
+  const { profileQuery } = useProfile();
+  const { checkout } = usePurchases();
+  const cart = cartQuery.data;
+  const profile = profileQuery.data;
+  const [selectedMethod, setSelectedMethod] = useState<'gcash' | 'card' | 'bank' | 'maya' | 'bank_transfer'>('card');
+  const [error, setError] = useState<string | null>(null);
+
+  const TRAIN_LIMIT = 250000;
+  const usedAmount = profile?.total_donations_amount ?? 0;
+  const trainPct = usedAmount / TRAIN_LIMIT;
+
+  const subtotal = (cart?.items ?? []).reduce(
+    (sum, item) => sum + item.face_value * item.quantity,
+    0,
+  );
+  const processingFee = Math.round(subtotal * 0.02);
+  const total = subtotal + processingFee;
+
+  async function handleCheckout() {
+    setError(null);
+    try {
+      const res = await checkout.mutateAsync({ payment_method: selectedMethod });
+      if (res.checkout_url) {
+        await WebBrowser.openBrowserAsync(res.checkout_url);
+      }
+      router.replace('/confirmation');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Checkout failed');
+    }
+  }
 
   return (
     <SafeLayout hideHeader>
@@ -36,16 +70,22 @@ export default function CheckoutScreen() {
           <Text style={styles.sectionTitle}>Order Summary</Text>
 
           <View style={styles.itemsList}>
-            <SummaryItem qty="01x" title="Rural Education Fund" price="₱5,000" />
-            <SummaryItem qty="02x" title="Reforestation Project" price="₱5,000" />
+            {(cart?.items ?? []).map((item) => (
+              <SummaryItem
+                key={item.id}
+                qty={`${String(item.quantity).padStart(2, '0')}x`}
+                title={item.campaign.title}
+                price={`₱${(item.face_value * item.quantity).toLocaleString()}`}
+              />
+            ))}
 
             <View style={styles.subtotalRow}>
               <Text style={styles.subtotalLabel}>Subtotal</Text>
-              <Text style={styles.subtotalPrice}>₱10,000</Text>
+              <Text style={styles.subtotalPrice}>₱{subtotal.toLocaleString()}</Text>
             </View>
             <View style={styles.feeRow}>
               <Text style={styles.feeLabel}>Processing Fee</Text>
-              <Text style={styles.feeValue}>₱0</Text>
+              <Text style={styles.feeValue}>₱{processingFee.toLocaleString()}</Text>
             </View>
           </View>
 
@@ -54,7 +94,7 @@ export default function CheckoutScreen() {
               <Text style={styles.totalTag}>Total Donation</Text>
               <Text style={styles.taxLegislation}>Tax-deductible under RA 10963</Text>
             </View>
-            <Text style={styles.totalAmount}>₱10,000</Text>
+            <Text style={styles.totalAmount}>₱{total.toLocaleString()}</Text>
           </View>
 
           {/* TRAIN Law Compliance */}
@@ -64,11 +104,11 @@ export default function CheckoutScreen() {
                 <MaterialSymbols name="verified_user" size={16} color={colors.primary} fill />
                 <Text style={styles.trainLabel}>TRAIN Law Limit Usage</Text>
               </View>
-              <Text style={styles.trainPercent}>4.00%</Text>
+              <Text style={styles.trainPercent}>{(trainPct * 100).toFixed(2)}%</Text>
             </View>
-            <ProgressBar progress={0.04} height={10} />
+            <ProgressBar progress={trainPct} height={10} />
             <View style={styles.limitRow}>
-              <Text style={styles.limitText}>₱10,000 used</Text>
+              <Text style={styles.limitText}>₱{usedAmount.toLocaleString()} used</Text>
               <Text style={styles.limitText}>₱250,000 Annual Limit</Text>
             </View>
           </View>
@@ -83,21 +123,21 @@ export default function CheckoutScreen() {
               icon="credit_card"
               label="Credit/Debit"
               selected={selectedMethod === 'card'}
-              onPress={setSelectedMethod}
+              onPress={(id: 'gcash' | 'card' | 'bank' | 'maya' | 'bank_transfer') => setSelectedMethod(id)}
             />
             <MethodBtn
-              id="wallet"
+              id="gcash"
               icon="account_balance_wallet"
-              label="Digital Wallet"
-              selected={selectedMethod === 'wallet'}
-              onPress={setSelectedMethod}
+              label="GCash"
+              selected={selectedMethod === 'gcash'}
+              onPress={(id: 'gcash' | 'card' | 'bank' | 'maya' | 'bank_transfer') => setSelectedMethod(id)}
             />
             <MethodBtn
-              id="bank"
+              id="bank_transfer"
               icon="account_balance"
               label="Bank Transfer"
-              selected={selectedMethod === 'bank'}
-              onPress={setSelectedMethod}
+              selected={selectedMethod === 'bank_transfer'}
+              onPress={(id: 'gcash' | 'card' | 'bank' | 'maya' | 'bank_transfer') => setSelectedMethod(id)}
             />
           </View>
         </View>
@@ -150,12 +190,18 @@ export default function CheckoutScreen() {
 
         {/* CTA */}
         <View style={styles.ctaContainer}>
+          {error && (
+            <Text style={{ color: 'red', fontSize: 13, textAlign: 'center', fontFamily: 'Manrope_500Medium' }}>
+              {error}
+            </Text>
+          )}
           <TouchableOpacity
             style={styles.completeBtn}
             activeOpacity={0.8}
-            onPress={() => router.push('/confirmation')}
+            onPress={handleCheckout}
+            disabled={checkout.isPending}
           >
-            <Text style={styles.completeBtnText}>Complete Donation</Text>
+            <Text style={styles.completeBtnText}>{checkout.isPending ? 'Processing...' : 'Complete Donation'}</Text>
           </TouchableOpacity>
           <Text style={styles.legalNote}>
             By clicking "Complete Donation", you agree to our Terms of Service and Privacy Policy. Your contribution is tax-deductible under RA 10963.
