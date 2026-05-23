@@ -5,7 +5,7 @@ import * as path from 'path';
 
 type RuntimeEnvironment = 'development' | 'staging' | 'production';
 
-const defaultAppName = 'Template Repo Mobile Single';
+const defaultAppName = 'BayaniHub';
 const defaultEnvironment: RuntimeEnvironment = 'development';
 const defaultApiBaseUrl = 'https://api.example.com';
 const kotlinVersion = '2.0.21';
@@ -100,25 +100,54 @@ export default function getExpoConfig(): ExpoConfig {
 
   return withXcodeBuildPhaseFix(withCiKotlinGradleProperty({
     name: appName,
-    slug: 'template-repo-mobile-single',
+    slug: 'bayanihubmobile',
     version: '1.0.0',
     orientation: 'portrait',
-    scheme: 'templatemobilesingle',
+    scheme: 'bayanihubmobile',
     userInterfaceStyle: 'automatic',
     jsEngine: 'hermes',
     experiments: {
       tsconfigPaths: true,
+      typedRoutes: true,
     },
     android: {
-      package: 'com.anonymous.templaterepombsingle',
+      package: 'com.bayanihub.mobile',
+      adaptiveIcon: {
+        backgroundColor: '#E6F4FE',
+        foregroundImage: './assets/android-icon-foreground.png',
+        backgroundImage: './assets/android-icon-background.png',
+        monochromeImage: './assets/android-icon-monochrome.png',
+      },
+      edgeToEdgeEnabled: true,
+      predictiveBackGestureEnabled: false,
     },
     ios: {
-      bundleIdentifier: 'com.anonymous.templaterepombsingle',
+      bundleIdentifier: 'com.bayanihub.mobile',
+      supportsTablet: true,
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },
     },
+    web: {
+      output: 'static',
+      favicon: './assets/favicon.png',
+    },
     plugins: [
+      'expo-font',
+      'expo-router',
+      'expo-secure-store',
+      [
+        'expo-splash-screen',
+        {
+          image: './assets/splash-icon.png',
+          imageWidth: 200,
+          resizeMode: 'contain',
+          backgroundColor: '#ffffff',
+          dark: {
+            backgroundColor: '#000000',
+          },
+        },
+      ],
       [
         'expo-build-properties',
         {
