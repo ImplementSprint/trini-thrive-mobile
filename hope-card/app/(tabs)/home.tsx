@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ScrollView, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, spacing, borderRadius } from '@digdon/ui';
-import { campaigns } from '@digdon/mock-data/campaigns';
+import { useCampaigns } from '../../hooks/useCampaigns';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { CampaignCard } from '@/components/campaigns/CampaignCard';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
@@ -13,8 +13,19 @@ const CATEGORIES = ['All', 'Education', 'Health', 'Environment', 'Animal Rescue'
 export default function HomeScreen() {
   const router = useRouter();
   const [activeCategory, setActiveCategory] = React.useState('All');
-  
-  const featuredCampaign = campaigns[0];
+  const [search, setSearch] = React.useState('');
+  const [debouncedSearch, setDebouncedSearch] = React.useState('');
+
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const { data: campaigns, isLoading, isError, refetch } = useCampaigns({
+    limit: 3,
+    category: activeCategory,
+    search: debouncedSearch,
+  });
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -33,10 +44,12 @@ export default function HomeScreen() {
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
           <MaterialSymbols name="search" size={24} color={colors.onSurfaceVariant} />
-          <TextInput 
+          <TextInput
             style={styles.searchInput}
             placeholder="Search causes near you..."
             placeholderTextColor={colors.onSurfaceVariant + '80'}
+            value={search}
+            onChangeText={setSearch}
           />
         </View>
       </View>
@@ -73,17 +86,27 @@ export default function HomeScreen() {
   return (
     <SafeLayout>
       <FlatList
-        data={campaigns.slice(0, 3)}
+        data={campaigns ?? []}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <CampaignCard 
-            campaign={item} 
+          <CampaignCard
+            campaign={item}
             onPress={(id) => router.push(`/modal?id=${id}`)}
           />
         )}
         ListHeaderComponent={renderHeader}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          isLoading ? (
+            <Text style={{ textAlign: 'center', color: colors.onSurfaceVariant, padding: 32, fontFamily: 'Manrope_500Medium' }}>Loading campaigns...</Text>
+          ) : isError ? (
+            <View style={{ alignItems: 'center', padding: 32, gap: 12 }}>
+              <Text style={{ color: colors.onSurfaceVariant, fontFamily: 'Manrope_500Medium' }}>Failed to load campaigns</Text>
+              <TouchableOpacity onPress={() => refetch()}><Text style={{ color: colors.primary, fontWeight: '700' }}>Retry</Text></TouchableOpacity>
+            </View>
+          ) : null
+        }
       />
     </SafeLayout>
   );

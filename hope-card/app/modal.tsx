@@ -2,17 +2,37 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, ImageBackground } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { colors, spacing, borderRadius } from '@digdon/ui';
-import { campaigns } from '@digdon/mock-data/campaigns';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
+import { useCampaign } from '../hooks/useCampaign';
 
 export default function DonationModal() {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const campaign = campaigns.find(c => c.id === id) || campaigns[0];
+  const { data: campaign, isLoading, isError } = useCampaign(id ?? '');
 
   const [selectedAmount, setSelectedAmount] = useState<number | null>(500);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
+
+  if (isLoading) {
+    return (
+      <SafeLayout>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ color: colors.onSurfaceVariant, fontFamily: 'Manrope_500Medium' }}>Loading...</Text>
+        </View>
+      </SafeLayout>
+    );
+  }
+
+  if (isError || !campaign) {
+    return (
+      <SafeLayout>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ color: colors.onSurfaceVariant, fontFamily: 'Manrope_500Medium' }}>Failed to load campaign.</Text>
+        </View>
+      </SafeLayout>
+    );
+  }
 
   const amounts = [
     { value: 50, points: 5 },
