@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ScrollView, TextInput, Share } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, spacing, borderRadius } from '@digdon/ui';
 import { useCampaigns } from '../../hooks/useCampaigns';
@@ -27,6 +27,18 @@ export default function ExploreScreen() {
   });
 
   const featuredCampaign = campaigns?.[0];
+
+  const handleShareFeatured = async () => {
+    if (!featuredCampaign) return;
+    try {
+      await Share.share({
+        message: `Check out this amazing featured campaign on HOPECARD: "${featuredCampaign.title}"! ${featuredCampaign.description ?? ''}`,
+        title: featuredCampaign.title,
+      });
+    } catch (e) {
+      console.error('Failed to share featured campaign:', e);
+    }
+  };
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -98,7 +110,7 @@ export default function ExploreScreen() {
             <View style={styles.featuredBadge}>
               <Text style={styles.featuredBadgeText}>FEATURED</Text>
             </View>
-            <TouchableOpacity style={styles.shareIconButton}>
+            <TouchableOpacity style={styles.shareIconButton} onPress={handleShareFeatured}>
               <MaterialSymbols name="share" size={20} color={colors.primary} />
             </TouchableOpacity>
           </View>

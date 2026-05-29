@@ -18,8 +18,23 @@ export type Cart = {
   items: CartItem[];
 };
 
+function mapCartResponse(res: any): Cart {
+  const cart = res.cart ?? res;
+  if (cart && Array.isArray(cart.items)) {
+    cart.items = cart.items.map((item: any) => ({
+      ...item,
+      campaign: item.campaign ?? {
+        id: item.campaign_id,
+        title: item.title ?? 'Campaign',
+        cover_image_url: item.cover_image_url,
+      },
+    }));
+  }
+  return cart;
+}
+
 export function getCart(): Promise<Cart> {
-  return apiGet<Cart>('/cart');
+  return apiGet<any>('/cart').then(mapCartResponse);
 }
 
 export function addToCart(
@@ -27,13 +42,17 @@ export function addToCart(
   face_value: number,
   quantity = 1,
 ): Promise<Cart> {
-  return apiPost<Cart>('/cart/items', { campaign_id, face_value, quantity });
+  return apiPost<any>('/cart/items', { campaign_id, face_value, quantity }).then(mapCartResponse);
 }
 
 export function updateCartItem(itemId: string, quantity: number): Promise<Cart> {
-  return apiPatch<Cart>(`/cart/items/${itemId}`, { quantity });
+  return apiPatch<any>(`/cart/items/${itemId}`, { quantity }).then(mapCartResponse);
 }
 
 export function removeCartItem(itemId: string): Promise<Cart> {
-  return apiDelete<Cart>(`/cart/items/${itemId}`);
+  return apiDelete<any>(`/cart/items/${itemId}`).then(mapCartResponse);
+}
+
+export function clearCart(): Promise<Cart> {
+  return apiDelete<any>('/cart/clear').then(mapCartResponse);
 }

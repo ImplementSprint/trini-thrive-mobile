@@ -14,15 +14,29 @@ function maskEmail(email: string): string {
   return `${masked}@${domain}`;
 }
 
+const RESEND_COOLDOWN = 60;
+
 export default function VerifyScreen() {
   const router = useRouter();
   const [focusedOtp, setFocusedOtp] = React.useState<number | null>(null);
   const [otp, setOtp] = React.useState(['', '', '', '', '', '']);
   const inputRefs = React.useRef<(TextInput | null)[]>([]);
-  const { verifyEmail } = useAuth();
+  const { verifyEmail, resendOtp } = useAuth();
   const { user } = useAuthContext();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [resendSuccess, setResendSuccess] = React.useState<string | null>(null);
+  const [countdown, setCountdown] = React.useState(RESEND_COOLDOWN);
+  const [resending, setResending] = React.useState(false);
+
+  // Countdown timer
+  React.useEffect(() => {
+    if (countdown <= 0) return;
+    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown]);
+
+  const pad = (n: number) => String(n).padStart(2, '0');
 
   async function handleVerify() {
     const otpString = otp.join('');
@@ -36,6 +50,23 @@ export default function VerifyScreen() {
       setError(e instanceof Error ? e.message : 'Verification failed');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleResend() {
+    if (!user?.email || countdown > 0 || resending) return;
+    setResending(true);
+    setError(null);
+    setResendSuccess(null);
+    try {
+      await resendOtp(user.email);
+      setResendSuccess('A new code has been sent to your email.');
+      setCountdown(RESEND_COOLDOWN);
+      setOtp(['', '', '', '', '', '']);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to resend code');
+    } finally {
+      setResending(false);
     }
   }
 
@@ -96,15 +127,26 @@ export default function VerifyScreen() {
           </View>
 
           <View style={styles.timerSection}>
-            <View style={styles.timerRow}>
-              <MaterialSymbols name="schedule" size={16} color={colors.onSurfaceVariant} />
-              <Text style={styles.timerText}>Resend code in <Text style={styles.primaryText}>00:54</Text></Text>
-            </View>
-            <TouchableOpacity>
-              <Text style={styles.resendButton}>Resend Code</Text>
+            {countdown > 0 ? (
+              <View style={styles.timerRow}>
+                <MaterialSymbols name="schedule" size={16} color={colors.onSurfaceVariant} />
+                <Text style={styles.timerText}>Resend code in <Text style={styles.primaryText}>00:{pad(countdown)}</Text></Text>
+              </View>
+            ) : (
+              <Text style={styles.timerText}>Didn't receive a code?</Text>
+            )}
+            <TouchableOpacity onPress={handleResend} disabled={countdown > 0 || resending}>
+              <Text style={[styles.resendButton, (countdown > 0 || resending) && { opacity: 0.4 }]}>
+                {resending ? 'Sending...' : 'Resend Code'}
+              </Text>
             </TouchableOpacity>
           </View>
 
+          {resendSuccess && (
+            <Text style={{ color: '#2E7D32', fontSize: 13, textAlign: 'center', fontFamily: 'Manrope_500Medium', marginBottom: 8 }}>
+              {resendSuccess}
+            </Text>
+          )}
           {error && (
             <Text style={{ color: 'red', fontSize: 13, textAlign: 'center', fontFamily: 'Manrope_500Medium', marginBottom: 8 }}>
               {error}
@@ -113,7 +155,7 @@ export default function VerifyScreen() {
           <HButton
             title={loading ? 'Verifying...' : 'Verify & Continue'}
             onPress={handleVerify}
-            disabled={loading}
+            disabled={loading || otp.join('').length < 6}
             size="lg"
             icon={<MaterialSymbols name="arrow_forward" size={20} color={colors.onPrimaryContainer} />}
             style={styles.submitButton}
@@ -136,6 +178,7 @@ export default function VerifyScreen() {
     </SafeLayout>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

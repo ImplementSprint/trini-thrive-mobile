@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCart, addToCart, updateCartItem, removeCartItem } from '../services/cart.service';
+import { getCart, addToCart, updateCartItem, removeCartItem, clearCart } from '../services/cart.service';
 
 export function useCart() {
   const qc = useQueryClient();
@@ -7,6 +7,8 @@ export function useCart() {
   const cartQuery = useQuery({
     queryKey: ['cart'],
     queryFn: getCart,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const addItem = useMutation({

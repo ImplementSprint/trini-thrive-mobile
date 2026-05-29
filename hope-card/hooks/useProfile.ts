@@ -13,6 +13,8 @@ export function useProfile() {
   const profileQuery = useQuery({
     queryKey: ['profile'],
     queryFn: getProfile,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const update = useMutation({
@@ -29,6 +31,8 @@ export function useProfile() {
   const impactQuery = useQuery({
     queryKey: ['profile', 'impact'],
     queryFn: getProfileImpact,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   return { profileQuery, update, uploadPhoto, impactQuery };

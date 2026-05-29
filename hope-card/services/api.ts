@@ -22,11 +22,16 @@ export class ApiError extends Error {
 async function handleResponse<T>(res: Response): Promise<T> {
   if (res.status === 401) {
     _onUnauthorized?.();
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, 'Invalid email or password. Please try again.');
   }
   if (!res.ok) {
     const body = await res.json().catch(() => ({ message: res.statusText }));
-    throw new ApiError(res.status, body.message ?? res.statusText);
+    // body.message can be a string or an object (e.g. ForbiddenException with { reason: ... })
+    const rawMessage = body.message ?? body.error ?? res.statusText;
+    const message = typeof rawMessage === 'object'
+      ? JSON.stringify(rawMessage)
+      : String(rawMessage);
+    throw new ApiError(res.status, message);
   }
   if (res.status === 204) return undefined as T;
   return res.json();

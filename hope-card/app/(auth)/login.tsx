@@ -18,16 +18,51 @@ export default function LoginScreen() {
   const [password, setPassword] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [isPending, setIsPending] = React.useState(false);
 
   async function handleLogin() {
     if (!email || !password) return;
     setLoading(true);
     setError(null);
+    setIsPending(false);
     try {
       await login(email, password);
       router.replace('/(tabs)/home');
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Login failed');
+      // The backend returns a ForbiddenException with { reason: 'pending_approval' }
+      // when the account exists but hasn't been approved yet.
+      // It returns an UnauthorizedException for invalid credentials.
+      const msg = e instanceof Error ? e.message : String(e);
+      const isJsonBody = msg.startsWith('{');
+      if (isJsonBody) {
+        try {
+          const parsed = JSON.parse(msg);
+          if (parsed?.reason === 'pending_approval') {
+            setIsPending(true);
+            setError('Your account is awaiting admin approval. You will be notified once access is granted.');
+          } else {
+            setError('Invalid email or password. Please try again.');
+          }
+        } catch {
+          setError('Invalid email or password. Please try again.');
+        }
+      } else if (
+        msg.toLowerCase().includes('invalid') ||
+        msg.toLowerCase().includes('unauthorized') ||
+        msg.toLowerCase().includes('password') ||
+        msg.toLowerCase().includes('credentials')
+      ) {
+        setError('Invalid email or password. Please try again.');
+      } else if (
+        msg.toLowerCase().includes('pending') ||
+        msg.toLowerCase().includes('approval') ||
+        msg.toLowerCase().includes('forbidden')
+      ) {
+        setIsPending(true);
+        setError('Your account is awaiting admin approval. You will be notified once access is granted.');
+      } else {
+        setError(msg || 'Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -114,9 +149,19 @@ export default function LoginScreen() {
             </View>
 
             {error && (
-              <Text style={{ color: 'red', fontSize: 13, textAlign: 'center', fontFamily: 'Manrope_500Medium' }}>
-                {error}
-              </Text>
+              <View style={[
+                styles.errorBanner,
+                isPending ? styles.errorBannerPending : styles.errorBannerRed,
+              ]}>
+                <MaterialSymbols
+                  name={isPending ? 'hourglass_empty' : 'error'}
+                  size={18}
+                  color={isPending ? '#92400E' : '#991B1B'}
+                />
+                <Text style={[styles.errorText, isPending && styles.errorTextPending]}>
+                  {error}
+                </Text>
+              </View>
             )}
             <HButton
               title={loading ? 'Signing in...' : 'Sign In'}
@@ -158,6 +203,34 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    borderRadius: borderRadius.sm,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  errorBannerRed: {
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  errorBannerPending: {
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  errorText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: 'Manrope_500Medium',
+    color: '#991B1B',
+    lineHeight: 18,
+  },
+  errorTextPending: {
+    color: '#92400E',
+  },
   outerContainer: {
     flex: 1,
     backgroundColor: '#FCF9F8',

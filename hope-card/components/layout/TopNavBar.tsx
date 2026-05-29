@@ -3,9 +3,13 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { colors, spacing } from '@digdon/ui';
 import { MaterialSymbols } from '../ui/MaterialSymbols';
 import { useRouter } from 'expo-router';
+import { useCart } from '../../hooks/useCart';
 
 export const TopNavBar = () => {
   const router = useRouter();
+  const { cartQuery } = useCart();
+  const cart = cartQuery.data;
+  const itemCount = (cart?.items ?? []).reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <View style={styles.container}>
@@ -22,9 +26,11 @@ export const TopNavBar = () => {
         <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/wallet')}>
           <View style={styles.cartContainer}>
             <MaterialSymbols name="shopping_cart" size={24} color={colors.primary} fill />
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>2</Text>
-            </View>
+            {itemCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{itemCount}</Text>
+              </View>
+            )}
           </View>
         </TouchableOpacity>
         

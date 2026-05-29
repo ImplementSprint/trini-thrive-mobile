@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, Image, Dimensions, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, spacing, borderRadius } from '@digdon/ui';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { HButton } from '@/components/ui/HButton';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
 import { useAuth } from '../../hooks/useAuth';
+import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 
 const { width } = Dimensions.get('window');
@@ -24,17 +25,91 @@ export default function SignUpScreen() {
   const [province, setProvince] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [idDocKey, setIdDocKey] = React.useState<string | null>(null);
+  const [idPreviewUri, setIdPreviewUri] = React.useState<string | null>(null);
+  const [idUploading, setIdUploading] = React.useState(false);
+  const [idError, setIdError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
   async function handlePickIdDocument() {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ['image/jpeg', 'image/png', 'application/pdf'],
-    });
-    if (result.canceled || !result.assets?.[0]) return;
-    const asset = result.assets[0];
-    const res = await uploadIdDoc({ uri: asset.uri, name: asset.name, type: asset.mimeType ?? 'application/octet-stream' });
-    setIdDocKey(res.key);
+    setIdError(null);
+    // Show action sheet to pick from camera or files
+    Alert.alert(
+      'Upload Valid ID',
+      'Choose how to provide your ID',
+      [
+        {
+          text: 'Take Photo',
+          onPress: async () => {
+            const permission = await ImagePicker.requestCameraPermissionsAsync();
+            if (!permission.granted) {
+              setIdError('Camera permission denied. Please enable it in Settings.');
+              return;
+            }
+            const result = await ImagePicker.launchCameraAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              quality: 0.85,
+              allowsEditing: true,
+            });
+            if (!result.canceled && result.assets[0]) {
+              const asset = result.assets[0];
+              await doUpload({ uri: asset.uri, name: `id_${Date.now()}.jpg`, type: 'image/jpeg' }, asset.uri);
+            }
+          },
+        },
+        {
+          text: 'Choose from Gallery',
+          onPress: async () => {
+            const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (!permission.granted) {
+              setIdError('Photo library permission denied. Please enable it in Settings.');
+              return;
+            }
+            const result = await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              quality: 0.85,
+              allowsEditing: true,
+            });
+            if (!result.canceled && result.assets[0]) {
+              const asset = result.assets[0];
+              await doUpload({ uri: asset.uri, name: `id_${Date.now()}.jpg`, type: 'image/jpeg' }, asset.uri);
+            }
+          },
+        },
+        {
+          text: 'Choose File (PDF)',
+          onPress: async () => {
+            const result = await DocumentPicker.getDocumentAsync({
+              type: ['image/jpeg', 'image/png', 'application/pdf'],
+            });
+            if (!result.canceled && result.assets?.[0]) {
+              const asset = result.assets[0];
+              await doUpload(
+                { uri: asset.uri, name: asset.name, type: asset.mimeType ?? 'application/octet-stream' },
+                asset.uri,
+              );
+            }
+          },
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+    );
+  }
+
+  async function doUpload(file: { uri: string; name: string; type: string }, previewUri: string) {
+    setIdUploading(true);
+    setIdError(null);
+    try {
+      const res = await uploadIdDoc(file);
+      setIdDocKey(res.key);
+      setIdPreviewUri(previewUri);
+    } catch (e: unknown) {
+      setIdError(e instanceof Error ? e.message : 'Failed to upload ID. Please try again.');
+      setIdPreviewUri(null);
+      setIdDocKey(null);
+    } finally {
+      setIdUploading(false);
+    }
   }
 
   async function handleRegister() {
@@ -134,9 +209,36 @@ export default function SignUpScreen() {
             
             <View style={styles.fileUpload}>
               <Text style={styles.label}>Valid ID<Text style={styles.asterisk}> *</Text></Text>
-              <TouchableOpacity style={styles.uploadButton} onPress={handlePickIdDocument}>
-                <Text style={styles.uploadText}>{idDocKey ? 'ID Uploaded' : 'Upload ID (JPG, PNG, PDF)'}</Text>
+              <TouchableOpacity
+                style={[styles.uploadButton, !!idDocKey && styles.uploadButtonSuccess, !!idError && styles.uploadButtonError]}
+                onPress={handlePickIdDocument}
+                disabled={idUploading}
+              >
+                {idUploading ? (
+                  <>
+                    <ActivityIndicator size="small" color={colors.primary} />
+                    <Text style={[styles.uploadText, { color: colors.primary }]}>Uploading...</Text>
+                  </>
+                ) : idDocKey ? (
+                  <>
+                    <MaterialSymbols name="check_circle" size={20} color="#2E7D32" />
+                    <Text style={[styles.uploadText, { color: '#2E7D32', fontWeight: '700' }]}>ID Uploaded ✓</Text>
+                  </>
+                ) : (
+                  <>
+                    <MaterialSymbols name="upload_file" size={20} color={colors.onSurfaceVariant} />
+                    <Text style={styles.uploadText}>Upload ID (Photo, JPG, PNG or PDF)</Text>
+                  </>
+                )}
               </TouchableOpacity>
+              {idPreviewUri && !idUploading && (
+                <Image source={{ uri: idPreviewUri }} style={styles.idPreview} resizeMode="cover" />
+              )}
+              {idError && (
+                <Text style={{ color: '#D32F2F', fontSize: 12, fontFamily: 'Manrope_500Medium', marginTop: 4 }}>
+                  {idError}
+                </Text>
+              )}
             </View>
 
             {error && (
@@ -352,6 +454,7 @@ const styles = StyleSheet.create({
   uploadButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
     backgroundColor: colors.surfaceContainerHighest,
     borderRadius: 18,
     paddingHorizontal: 16,
@@ -359,6 +462,23 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderStyle: 'dashed',
     borderColor: 'rgba(218, 193, 190, 0.3)',
+  },
+  uploadButtonSuccess: {
+    borderColor: '#2E7D32',
+    borderStyle: 'solid',
+    backgroundColor: '#E8F5E9',
+  },
+  uploadButtonError: {
+    borderColor: '#D32F2F',
+    borderStyle: 'solid',
+  },
+  idPreview: {
+    width: '100%',
+    height: 160,
+    borderRadius: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
   },
   uploadText: {
     flex: 1,

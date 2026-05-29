@@ -1,4 +1,4 @@
-import { apiGet, apiPut, apiUpload } from './api';
+import { apiGet, apiPatch, apiUpload } from './api';
 
 export type DonorProfile = {
   id: string;
@@ -36,11 +36,11 @@ export type UploadPhotoResponse = {
 };
 
 export function getProfile(): Promise<DonorProfile> {
-  return apiGet<DonorProfile>('/profile');
+  return apiGet<any>('/profile').then((res) => res.profile ?? res);
 }
 
 export function updateProfile(payload: UpdateProfilePayload): Promise<DonorProfile> {
-  return apiPut<DonorProfile>('/profile', payload);
+  return apiPatch<DonorProfile>('/profile', payload);
 }
 
 export function uploadProfilePhoto(
@@ -50,5 +50,15 @@ export function uploadProfilePhoto(
 }
 
 export function getProfileImpact(): Promise<ProfileImpact> {
-  return apiGet<ProfileImpact>('/profile/impact');
+  return apiGet<any>('/profile/impact').then((res) => {
+    if (res.stats) {
+      return {
+        ...res,
+        total_donations_amount: res.stats.total_donations_amount,
+        total_donations_count: res.stats.total_donations_count,
+        hopecards_donated: res.stats.hopecards_donated,
+      };
+    }
+    return res;
+  });
 }

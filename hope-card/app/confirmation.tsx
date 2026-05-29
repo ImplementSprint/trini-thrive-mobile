@@ -1,12 +1,39 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Share } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors, spacing, borderRadius } from '@digdon/ui';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
+import { useProfile } from '../hooks/useProfile';
 
 export default function ConfirmationScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ amount?: string; transactionId?: string; cause?: string }>();
+  const { profileQuery } = useProfile();
+  const profile = profileQuery.data;
+
+  const buyerName = profile?.first_name || 'Generous Donor';
+  const amountVal = params.amount ? Number(params.amount) : 10000;
+  const transactionId = params.transactionId || '#HC-982341';
+  const cause = params.cause || 'Rural Education Fund & Reforestation Project';
+
+  const dateStr = React.useMemo(() => {
+    return new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  }, []);
+
+  async function handleShare() {
+    try {
+      await Share.share({
+        message: `I just donated ₱${amountVal.toLocaleString()} to support "${cause}" via HOPECARD! Join me in making an impact! 🌟`,
+      });
+    } catch (error) {
+      console.error('Error sharing impact:', error);
+    }
+  }
 
   return (
     <SafeLayout hideHeader>
@@ -44,7 +71,7 @@ export default function ConfirmationScreen() {
 
           <Text style={styles.successTitle}>Donation Successful!</Text>
           <Text style={styles.successMessage}>
-            Thank you for your generosity, <Text style={styles.boldPrimary}>Alex</Text>. Your contribution fuels stories that matter.
+            Thank you for your generosity, <Text style={styles.boldPrimary}>{buyerName}</Text>. Your contribution fuels stories that matter.
           </Text>
         </View>
 
@@ -59,24 +86,24 @@ export default function ConfirmationScreen() {
           <View style={styles.detailsList}>
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>Cause Supported</Text>
-              <Text style={styles.detailValuePrimary}>Rural Education Fund & Reforestation Project</Text>
+              <Text style={styles.detailValuePrimary}>{cause}</Text>
             </View>
 
             <View style={styles.detailItemRow}>
               <Text style={styles.detailLabel}>Amount</Text>
-              <Text style={styles.amountText}>₱10,000</Text>
+              <Text style={styles.amountText}>₱{amountVal.toLocaleString()}</Text>
             </View>
 
             <View style={styles.divider} />
 
             <View style={styles.detailItemRow}>
               <Text style={styles.detailLabelSmall}>Transaction ID</Text>
-              <Text style={styles.detailValueSmall}>#HC-982341</Text>
+              <Text style={styles.detailValueSmall}>{transactionId}</Text>
             </View>
 
             <View style={styles.detailItemRow}>
               <Text style={styles.detailLabelSmall}>Date</Text>
-              <Text style={styles.detailValueSmall}>October 24, 2026</Text>
+              <Text style={styles.detailValueSmall}>{dateStr}</Text>
             </View>
           </View>
         </View>
@@ -107,7 +134,7 @@ export default function ConfirmationScreen() {
             <Text style={styles.receiptBtnText}>Download E-Receipt</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.shareBtn} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.shareBtn} activeOpacity={0.8} onPress={handleShare}>
             <MaterialSymbols name="share" size={24} color={colors.secondary} />
             <Text style={styles.shareBtnText}>Share Your Impact</Text>
           </TouchableOpacity>

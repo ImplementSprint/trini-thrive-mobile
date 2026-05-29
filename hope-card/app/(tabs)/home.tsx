@@ -21,10 +21,12 @@ export default function HomeScreen() {
     return () => clearTimeout(t);
   }, [search]);
 
+  const isFiltered = activeCategory !== 'All' || debouncedSearch.length > 0;
+
   const { data: campaigns, isLoading, isError, refetch } = useCampaigns({
-    limit: 3,
-    category: activeCategory,
-    search: debouncedSearch,
+    limit: isFiltered ? undefined : 10,
+    category: activeCategory !== 'All' ? activeCategory : undefined,
+    search: debouncedSearch || undefined,
   });
 
   const renderHeader = () => (
@@ -104,6 +106,14 @@ export default function HomeScreen() {
             <View style={{ alignItems: 'center', padding: 32, gap: 12 }}>
               <Text style={{ color: colors.onSurfaceVariant, fontFamily: 'Manrope_500Medium' }}>Failed to load campaigns</Text>
               <TouchableOpacity onPress={() => refetch()}><Text style={{ color: colors.primary, fontWeight: '700' }}>Retry</Text></TouchableOpacity>
+            </View>
+          ) : isFiltered ? (
+            <View style={{ alignItems: 'center', padding: 32, gap: 8 }}>
+              <Text style={{ fontSize: 32 }}>🔍</Text>
+              <Text style={{ color: colors.onSurface, fontWeight: '800', fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', textAlign: 'center' }}>No campaigns found</Text>
+              <Text style={{ color: colors.onSurfaceVariant, fontFamily: 'Manrope_500Medium', textAlign: 'center', fontSize: 14 }}>
+                {debouncedSearch ? `No results for "${debouncedSearch}"` : `No campaigns in "${activeCategory}"`}
+              </Text>
             </View>
           ) : null
         }

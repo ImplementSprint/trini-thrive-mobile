@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Share } from 'react-native';
 import { colors, spacing, borderRadius } from '@digdon/ui';
 import { Campaign } from '@digdon/ui/types';
 import { HCard } from '../ui/HCard';
@@ -17,6 +17,17 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
 }) => {
   const progress = campaign.progress_pct / 100;
 
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `Check out this amazing campaign on HOPECARD: "${campaign.title}"! ${campaign.description ?? ''}`,
+        title: campaign.title,
+      });
+    } catch (e) {
+      console.error('Failed to share:', e);
+    }
+  };
+
   return (
     <TouchableOpacity onPress={() => onPress(campaign.id)} activeOpacity={0.9} style={styles.touchable}>
       <HCard style={styles.card}>
@@ -25,7 +36,7 @@ export const CampaignCard: React.FC<CampaignCardProps> = ({
           <View style={styles.categoryOverlay}>
             <Text style={styles.categoryOverlayText}>{campaign.category}</Text>
           </View>
-          <TouchableOpacity style={styles.shareIconSmall}>
+          <TouchableOpacity style={styles.shareIconSmall} onPress={handleShare}>
             <MaterialSymbols name="share" size={18} color={colors.primary} />
           </TouchableOpacity>
         </View>

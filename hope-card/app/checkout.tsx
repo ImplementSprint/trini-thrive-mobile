@@ -8,38 +8,80 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useCart } from '../hooks/useCart';
 import { useProfile } from '../hooks/useProfile';
 import { usePurchases } from '../hooks/usePurchases';
+import { clearCart } from '../services/cart.service';
 import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function CheckoutScreen() {
   const router = useRouter();
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const { cartQuery } = useCart();
-  const { profileQuery } = useProfile();
+  const { impactQuery } = useProfile();
   const { checkout } = usePurchases();
+  const qc = useQueryClient();
   const cart = cartQuery.data;
-  const profile = profileQuery.data;
+  const impact = impactQuery.data;
   const [selectedMethod, setSelectedMethod] = useState<'gcash' | 'card' | 'bank' | 'maya' | 'bank_transfer'>('card');
   const [error, setError] = useState<string | null>(null);
 
   const TRAIN_LIMIT = 250000;
-  const usedAmount = profile?.total_donations_amount ?? 0;
-  const trainPct = usedAmount / TRAIN_LIMIT;
+  const usedAmount = impact?.total_donations_amount ?? 0;
+  const trainPct = Math.min(usedAmount / TRAIN_LIMIT, 1);
 
   const subtotal = (cart?.items ?? []).reduce(
     (sum, item) => sum + item.face_value * item.quantity,
     0,
   );
-  const processingFee = Math.round(subtotal * 0.02);
+  const processingFee = Math.round(subtotal * 0.015);
   const total = subtotal + processingFee;
 
   async function handleCheckout() {
     setError(null);
     try {
-      const res = await checkout.mutateAsync({ payment_method: selectedMethod });
+      const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://10.0.2.2:3104/api/v1';
+      const appSuccessUrl = Linking.createURL('confirmation');
+      const appCancelUrl = Linking.createURL('wallet');
+      
+      const successUrl = `${apiBaseUrl}/hopecard/donor/purchases/payment/success?redirectUrl=${encodeURIComponent(appSuccessUrl)}`;
+      const cancelUrl = `${apiBaseUrl}/hopecard/donor/purchases/payment/cancel?redirectUrl=${encodeURIComponent(appCancelUrl)}`;
+
+      const res = await checkout.mutateAsync({
+        payment_method: selectedMethod,
+        successUrl,
+        cancelUrl,
+      });
+
       if (res.checkout_url) {
         await WebBrowser.openBrowserAsync(res.checkout_url);
       }
-      router.replace('/confirmation');
+
+      // Explicitly DELETE all items from the backend so the basket is truly empty.
+      // This is the most reliable approach — we don't rely on the confirmPurchase
+      // in the redirect page (which can fail silently).
+      try {
+        const clearedCart = await clearCart();
+        qc.setQueryData(['cart'], clearedCart);
+      } catch {
+        // Fallback: at least clear locally if the API call fails
+        qc.setQueryData(['cart'], (old: any) => {
+          if (!old) return old;
+          return { ...old, items: [] };
+        });
+      }
+      qc.invalidateQueries({ queryKey: ['profile'] });
+      qc.invalidateQueries({ queryKey: ['profile', 'impact'] });
+      qc.invalidateQueries({ queryKey: ['purchases'] });
+
+      const causeTitles = (cart?.items ?? []).map(i => i.campaign.title).join(', ') || 'HOPECARD Donation';
+      router.replace({
+        pathname: '/confirmation',
+        params: {
+          amount: total.toString(),
+          transactionId: res.purchase_id || '',
+          cause: causeTitles,
+        }
+      });
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Checkout failed');
     }
@@ -84,7 +126,7 @@ export default function CheckoutScreen() {
               <Text style={styles.subtotalPrice}>₱{subtotal.toLocaleString()}</Text>
             </View>
             <View style={styles.feeRow}>
-              <Text style={styles.feeLabel}>Processing Fee</Text>
+              <Text style={styles.feeLabel}>Processing Fee (1.5%)</Text>
               <Text style={styles.feeValue}>₱{processingFee.toLocaleString()}</Text>
             </View>
           </View>

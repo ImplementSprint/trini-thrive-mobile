@@ -1,7 +1,8 @@
 import { apiPost, apiUpload } from './api';
 
 export type AuthTokenResponse = {
-  access_token: string;
+  access_token?: string;
+  token?: string;
   isNew?: boolean;
 };
 
@@ -33,7 +34,7 @@ export function login(email: string, password: string): Promise<AuthTokenRespons
 }
 
 export function register(payload: RegisterPayload): Promise<AuthTokenResponse> {
-  return apiPost<AuthTokenResponse>('/auth/register', payload, false);
+  return apiPost<AuthTokenResponse>('/auth/signup', payload, false);
 }
 
 export function verifyEmail(email: string, otp: string): Promise<MessageResponse> {
@@ -56,4 +57,8 @@ export function uploadIdDocument(
   file: { uri: string; name: string; type: string },
 ): Promise<UploadIdDocumentResponse> {
   return apiUpload<UploadIdDocumentResponse>('/auth/id-document', file, false);
+}
+
+export function resendOtp(email: string): Promise<MessageResponse> {
+  return apiPost<MessageResponse>('/auth/resend-otp', { email }, false);
 }

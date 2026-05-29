@@ -11,20 +11,20 @@ import { useProfile } from '../../hooks/useProfile';
 export default function WalletScreen() {
   const router = useRouter();
   const { cartQuery, updateItem, removeItem } = useCart();
-  const { profileQuery } = useProfile();
+  const { impactQuery } = useProfile();
   const cart = cartQuery.data;
-  const profile = profileQuery.data;
+  const impact = impactQuery.data;
 
   const TRAIN_LIMIT = 250000;
-  const usedAmount = profile?.total_donations_amount ?? 0;
-  const trainPct = usedAmount / TRAIN_LIMIT;
-  const trainRemaining = TRAIN_LIMIT - usedAmount;
+  const usedAmount = impact?.total_donations_amount ?? 0;
+  const trainPct = Math.min(usedAmount / TRAIN_LIMIT, 1);
+  const trainRemaining = Math.max(TRAIN_LIMIT - usedAmount, 0);
 
   const subtotal = (cart?.items ?? []).reduce(
     (sum, item) => sum + item.face_value * item.quantity,
     0,
   );
-  const processingFee = Math.round(subtotal * 0.02);
+  const processingFee = Math.round(subtotal * 0.015);
   const total = subtotal + processingFee;
 
   if (cartQuery.isLoading) {
@@ -101,7 +101,7 @@ export default function WalletScreen() {
                 <Text style={styles.rowValue}>₱{subtotal.toLocaleString()}</Text>
               </View>
               <View style={styles.summaryRow}>
-                <Text style={styles.rowLabel}>Processing Fee</Text>
+                <Text style={styles.rowLabel}>Processing Fee (1.5%)</Text>
                 <Text style={styles.rowValue}>₱{processingFee.toLocaleString()}</Text>
               </View>
               <View style={styles.divider} />

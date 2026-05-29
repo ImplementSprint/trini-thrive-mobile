@@ -8,13 +8,21 @@ export function useAuth() {
 
   async function login(email: string, password: string) {
     const res = await authService.login(email, password);
-    await saveToken(res.access_token);
+    if (res.token || res.access_token) {
+      await saveToken(res.token ?? res.access_token!);
+    } else {
+      throw new Error('Authentication response is missing the token');
+    }
     return res;
   }
 
   async function register(payload: authService.RegisterPayload) {
     const res = await authService.register(payload);
-    await saveToken(res.access_token);
+    if (res.token || res.access_token) {
+      await saveToken(res.token ?? res.access_token!);
+    } else {
+      throw new Error('Registration response is missing the token');
+    }
     return res;
   }
 
@@ -24,6 +32,10 @@ export function useAuth() {
 
   async function verifyEmail(email: string, otp: string) {
     return authService.verifyEmail(email, otp);
+  }
+
+  async function resendOtp(email: string) {
+    return authService.resendOtp(email);
   }
 
   async function forgotPassword(email: string) {
@@ -51,6 +63,7 @@ export function useAuth() {
     register,
     uploadIdDoc,
     verifyEmail,
+    resendOtp,
     forgotPassword,
     verifyOtp,
     resetPassword,

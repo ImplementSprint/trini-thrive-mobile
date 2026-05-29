@@ -10,7 +10,7 @@ export type DonorNotification = {
 };
 
 export function getNotifications(): Promise<DonorNotification[]> {
-  return apiGet<DonorNotification[]>('/notifications');
+  return apiGet<any>('/notifications').then((res) => (Array.isArray(res) ? res : res.notifications ?? []));
 }
 
 export function markNotificationRead(id: string): Promise<void> {

@@ -5,6 +5,7 @@ import { colors, spacing, borderRadius } from '@digdon/ui';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
 import { useCampaign } from '../hooks/useCampaign';
+import { useCart } from '../hooks/useCart';
 
 export default function DonationModal() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -13,6 +14,34 @@ export default function DonationModal() {
 
   const [selectedAmount, setSelectedAmount] = useState<number | null>(500);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const [customAmountError, setCustomAmountError] = useState<string | null>(null);
+
+  const MIN_AMOUNT = 50;
+  const MAX_AMOUNT = 4999;
+
+  const { addItem } = useCart();
+  const [isAdding, setIsAdding] = useState(false);
+
+  async function handleAddToCart() {
+    if (!campaign || !selectedAmount || selectedAmount <= 0) return;
+    if (selectedAmount < MIN_AMOUNT || selectedAmount > MAX_AMOUNT) {
+      setCustomAmountError(`Amount must be between ₱${MIN_AMOUNT} and ₱${MAX_AMOUNT.toLocaleString()}`);
+      return;
+    }
+    setIsAdding(true);
+    try {
+      await addItem.mutateAsync({
+        campaign_id: campaign.id,
+        face_value: selectedAmount,
+        quantity: 1,
+      });
+      router.back();
+    } catch (e) {
+      console.error('Failed to add to cart:', e);
+    } finally {
+      setIsAdding(false);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -102,19 +131,37 @@ export default function DonationModal() {
           </View>
 
           <View style={styles.customAmount}>
-            <Text style={styles.customLabel}>Or enter custom amount</Text>
-            <View style={[styles.inputBox, focusedInput === 'custom' && styles.inputBoxFocused]}>
+            <Text style={styles.customLabel}>Or enter custom amount <Text style={styles.customLabelHint}>(₱50 – ₱4,999)</Text></Text>
+            <View style={[styles.inputBox, focusedInput === 'custom' && styles.inputBoxFocused, !!customAmountError && styles.inputBoxError]}>
               <Text style={styles.currency}>₱</Text>
               <TextInput
                 style={styles.textInput}
-                placeholder="5,000"
+                placeholder="50 – 4,999"
                 placeholderTextColor={colors.onSurfaceVariant + '40'}
                 keyboardType="number-pad"
-                onChangeText={(text) => setSelectedAmount(Number(text))}
+                onChangeText={(text) => {
+                  const num = Number(text);
+                  setSelectedAmount(num);
+                  setCustomAmountError(null);
+                }}
                 onFocus={() => setFocusedInput('custom')}
-                onBlur={() => setFocusedInput(null)}
+                onBlur={() => {
+                  setFocusedInput(null);
+                  if (selectedAmount !== null && selectedAmount > 0) {
+                    if (selectedAmount < MIN_AMOUNT) {
+                      setCustomAmountError(`Minimum amount is ₱${MIN_AMOUNT}`);
+                    } else if (selectedAmount > MAX_AMOUNT) {
+                      setCustomAmountError(`Maximum amount is ₱${MAX_AMOUNT.toLocaleString()}`);
+                    } else {
+                      setCustomAmountError(null);
+                    }
+                  }
+                }}
               />
             </View>
+            {customAmountError && (
+              <Text style={styles.amountErrorText}>{customAmountError}</Text>
+            )}
           </View>
         </View>
 
@@ -134,9 +181,12 @@ export default function DonationModal() {
           <TouchableOpacity
             style={styles.primaryBtn}
             activeOpacity={0.9}
-            onPress={() => router.back()}
+            onPress={handleAddToCart}
+            disabled={isAdding || !selectedAmount || selectedAmount <= 0 || selectedAmount < MIN_AMOUNT || selectedAmount > MAX_AMOUNT}
           >
-            <Text style={styles.primaryBtnText}>Add to Cart</Text>
+            <Text style={styles.primaryBtnText}>
+              {isAdding ? 'Adding...' : 'Add to Cart'}
+            </Text>
             <MaterialSymbols name="arrow_forward" size={20} color="white" />
           </TouchableOpacity>
         </View>
@@ -303,6 +353,21 @@ const styles = StyleSheet.create({
   inputBoxFocused: {
     borderColor: colors.outlineFocus,
     borderWidth: 2,
+  },
+  inputBoxError: {
+    borderColor: '#E53935',
+    borderWidth: 2,
+  },
+  amountErrorText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#E53935',
+    marginTop: -4,
+  },
+  customLabelHint: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.onSurfaceVariant,
   },
   currency: {
     fontSize: 20,

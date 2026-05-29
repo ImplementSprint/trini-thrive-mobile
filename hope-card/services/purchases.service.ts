@@ -15,6 +15,8 @@ export type Purchase = {
 
 export type CheckoutPayload = {
   payment_method: 'gcash' | 'card' | 'bank' | 'maya' | 'bank_transfer';
+  successUrl?: string;
+  cancelUrl?: string;
 };
 
 export type CheckoutResponse = {
@@ -23,9 +25,12 @@ export type CheckoutResponse = {
 };
 
 export function checkout(payload: CheckoutPayload): Promise<CheckoutResponse> {
-  return apiPost<CheckoutResponse>('/purchases/checkout', payload);
+  return apiPost<any>('/purchases/checkout', payload).then((res) => ({
+    checkout_url: res.checkoutUrl ?? res.checkout_url,
+    purchase_id: res.checkoutId ?? res.purchase_id,
+  }));
 }
 
 export function getPurchaseHistory(): Promise<Purchase[]> {
-  return apiGet<Purchase[]>('/purchases');
+  return apiGet<any>('/purchases').then((res) => (Array.isArray(res) ? res : res.purchases ?? []));
 }
