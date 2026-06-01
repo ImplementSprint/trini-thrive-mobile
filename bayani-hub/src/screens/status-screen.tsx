@@ -247,7 +247,7 @@ export function StatusScreen() {
               <Text style={s.eventPassDetailValue}>{app.event_date || 'TBD'}</Text>
             </View>
             <View>
-              <Text style={s.eventPassDetailLabel}>{app.type === 'donation' ? 'ITEM' : 'SEAT'}</Text>
+              <Text style={s.eventPassDetailLabel}>{app.type === 'donation' ? 'ITEM' : 'ROLE'}</Text>
               <Text style={s.eventPassDetailValue}>{app.role || 'Volunteer'}</Text>
             </View>
           </View>
