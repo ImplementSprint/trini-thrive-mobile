@@ -5,39 +5,12 @@ import { colors, spacing, borderRadius } from '@digdon/ui';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { HButton } from '@/components/ui/HButton';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
-import { useAuth } from '../../hooks/useAuth';
-import { useAuthContext } from '../../context/AuthContext';
-
-function maskEmail(email: string): string {
-  const [local, domain] = email.split('@');
-  const masked = local[0] + '***' + (local.length > 1 ? local[local.length - 1] : '');
-  return `${masked}@${domain}`;
-}
 
 export default function VerifyScreen() {
   const router = useRouter();
   const [focusedOtp, setFocusedOtp] = React.useState<number | null>(null);
   const [otp, setOtp] = React.useState(['', '', '', '', '', '']);
   const inputRefs = React.useRef<(TextInput | null)[]>([]);
-  const { verifyEmail } = useAuth();
-  const { user } = useAuthContext();
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-
-  async function handleVerify() {
-    const otpString = otp.join('');
-    if (otpString.length !== 6 || !user?.email) return;
-    setLoading(true);
-    setError(null);
-    try {
-      await verifyEmail(user.email, otpString);
-      router.replace('/(tabs)/home');
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Verification failed');
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const handleChangeText = (text: string, index: number) => {
     const cleanedText = text.replace(/[^0-9]/g, '');
@@ -70,7 +43,7 @@ export default function VerifyScreen() {
           <Text style={styles.title}>Verification Code</Text>
           <Text style={styles.subtitle}>
             Enter the 6-digit code sent to your email{'\n'}
-            <Text style={styles.boldEmail}>{user?.email ? maskEmail(user.email) : 'your email'}</Text>
+            <Text style={styles.boldEmail}>h***y@hopecard.org</Text>
           </Text>
         </View>
 
@@ -105,15 +78,9 @@ export default function VerifyScreen() {
             </TouchableOpacity>
           </View>
 
-          {error && (
-            <Text style={{ color: 'red', fontSize: 13, textAlign: 'center', fontFamily: 'Manrope_500Medium', marginBottom: 8 }}>
-              {error}
-            </Text>
-          )}
           <HButton
-            title={loading ? 'Verifying...' : 'Verify & Continue'}
-            onPress={handleVerify}
-            disabled={loading}
+            title="Verify & Continue"
+            onPress={() => router.push('/(tabs)/home')}
             size="lg"
             icon={<MaterialSymbols name="arrow_forward" size={20} color={colors.onPrimaryContainer} />}
             style={styles.submitButton}

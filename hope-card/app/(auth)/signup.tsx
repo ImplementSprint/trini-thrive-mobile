@@ -5,8 +5,6 @@ import { colors, spacing, borderRadius } from '@digdon/ui';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { HButton } from '@/components/ui/HButton';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
-import { useAuth } from '../../hooks/useAuth';
-import * as DocumentPicker from 'expo-document-picker';
 
 const { width } = Dimensions.get('window');
 
@@ -15,49 +13,6 @@ export default function SignUpScreen() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [focusedInput, setFocusedInput] = React.useState<string | null>(null);
   const [agreed, setAgreed] = React.useState(false);
-  const { uploadIdDoc, register } = useAuth();
-  const [firstName, setFirstName] = React.useState('');
-  const [lastName, setLastName] = React.useState('');
-  const [email, setEmail] = React.useState('');
-  const [barangay, setBarangay] = React.useState('');
-  const [municipality, setMunicipality] = React.useState('');
-  const [province, setProvince] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [idDocKey, setIdDocKey] = React.useState<string | null>(null);
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-
-  async function handlePickIdDocument() {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ['image/jpeg', 'image/png', 'application/pdf'],
-    });
-    if (result.canceled || !result.assets?.[0]) return;
-    const asset = result.assets[0];
-    const res = await uploadIdDoc({ uri: asset.uri, name: asset.name, type: asset.mimeType ?? 'application/octet-stream' });
-    setIdDocKey(res.key);
-  }
-
-  async function handleRegister() {
-    setLoading(true);
-    setError(null);
-    try {
-      await register({
-        email,
-        password,
-        first_name: firstName,
-        last_name: lastName,
-        barangay,
-        municipality,
-        province,
-        id_document_key: idDocKey ?? undefined,
-      });
-      router.push('/(auth)/verify');
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Registration failed');
-    } finally {
-      setLoading(false);
-    }
-  }
 
   return (
     <SafeLayout hideHeader>
@@ -95,12 +50,12 @@ export default function SignUpScreen() {
 
           {/* Form */}
           <View style={styles.form}>
-            <InputGroup label="First Name" icon="person" placeholder="Evelyn" value={firstName} onChangeText={setFirstName} focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="firstName" />
-            <InputGroup label="Last Name" icon="person" placeholder="Harper" value={lastName} onChangeText={setLastName} focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="lastName" />
-            <InputGroup label="Email Address" icon="mail" placeholder="name@example.com" keyboardType="email-address" value={email} onChangeText={setEmail} focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="email" />
-            <InputGroup label="Barangay" icon="location" placeholder="Enter barangay" value={barangay} onChangeText={setBarangay} focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="barangay" />
-            <InputGroup label="Municipality" icon="location" placeholder="Enter municipality" value={municipality} onChangeText={setMunicipality} focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="municipality" />
-            <InputGroup label="Province" icon="location" placeholder="Enter province" value={province} onChangeText={setProvince} focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="province" />
+            <InputGroup label="First Name" icon="person" placeholder="Evelyn" focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="firstName" />
+            <InputGroup label="Last Name" icon="person" placeholder="Harper" focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="lastName" />
+            <InputGroup label="Email Address" icon="mail" placeholder="name@example.com" keyboardType="email-address" focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="email" />
+            <InputGroup label="Barangay" icon="location" placeholder="Enter barangay" focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="barangay" />
+            <InputGroup label="Municipality" icon="location" placeholder="Enter municipality" focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="municipality" />
+            <InputGroup label="Province" icon="location" placeholder="Enter province" focusedInput={focusedInput} setFocusedInput={setFocusedInput} inputId="province" />
             <View style={styles.inputGroup}>
               <View style={styles.labelRow}>
                 <Text style={styles.label}>Password<Text style={styles.asterisk}> *</Text></Text>
@@ -112,13 +67,11 @@ export default function SignUpScreen() {
                   color={colors.outline} 
                   style={styles.inputIcon} 
                 />
-                <TextInput
+                <TextInput 
                   style={styles.input}
                   placeholder="••••••••"
                   placeholderTextColor={colors.outlineVariant}
                   secureTextEntry={!showPassword}
-                  value={password}
-                  onChangeText={setPassword}
                   onFocus={() => setFocusedInput('password')}
                   onBlur={() => setFocusedInput(null)}
                 />
@@ -134,22 +87,17 @@ export default function SignUpScreen() {
             
             <View style={styles.fileUpload}>
               <Text style={styles.label}>Valid ID<Text style={styles.asterisk}> *</Text></Text>
-              <TouchableOpacity style={styles.uploadButton} onPress={handlePickIdDocument}>
-                <Text style={styles.uploadText}>{idDocKey ? 'ID Uploaded' : 'Upload ID (JPG, PNG, PDF)'}</Text>
+              <TouchableOpacity style={styles.uploadButton}>
+                <Text style={styles.uploadText}>Upload ID (JPG, PNG, PDF)</Text>
               </TouchableOpacity>
             </View>
 
-            {error && (
-              <Text style={{ color: 'red', fontSize: 13, textAlign: 'center', fontFamily: 'Manrope_500Medium' }}>
-                {error}
-              </Text>
-            )}
-            <HButton
-              title={loading ? 'Creating account...' : 'Sign Up'}
-              onPress={handleRegister}
+            <HButton 
+              title="Sign Up" 
+              onPress={() => router.push('/(auth)/verify')} 
               size="lg"
               style={styles.submitButton}
-              disabled={!agreed || loading}
+              disabled={!agreed}
             />
           </View>
 

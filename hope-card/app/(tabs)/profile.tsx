@@ -1,68 +1,24 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors } from '@digdon/ui';
+import { colors, spacing, borderRadius } from '@digdon/ui';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
-import { useAuth } from '../../hooks/useAuth';
-import { useProfile } from '../../hooks/useProfile';
-import * as ImagePicker from 'expo-image-picker';
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const [fullName, setFullName] = useState('Alex Rivera');
+  const [mobile, setMobile] = useState('+1 (555) 123-4567');
+  const [email, setEmail] = useState('alex.rivera@impactmail.org');
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
-  const { logout } = useAuth();
-  const { profileQuery, update, uploadPhoto } = useProfile();
-  const profile = profileQuery.data;
-
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (profile) {
-      setFirstName(profile.first_name);
-      setLastName(profile.last_name);
-      setPhone(profile.phone ?? '');
-    }
-  }, [profile]);
-
-  async function handleSave() {
-    setSaving(true);
-    setSaveError(null);
-    try {
-      await update.mutateAsync({ first_name: firstName, last_name: lastName, phone });
-    } catch (e: unknown) {
-      setSaveError(e instanceof Error ? e.message : 'Save failed');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handlePickPhoto() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
-    if (result.canceled || !result.assets?.[0]) return;
-    const asset = result.assets[0];
-    const ext = asset.uri.split('.').pop() ?? 'jpg';
-    await uploadPhoto.mutateAsync({
-      uri: asset.uri,
-      name: `photo.${ext}`,
-      type: asset.mimeType ?? 'image/jpeg',
-    });
-  }
 
   return (
     <SafeLayout>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         {/* Simple Header */}
         <View style={styles.header}>
-          <Text style={styles.userName}>{profile ? `${profile.first_name} ${profile.last_name}` : 'Loading...'}</Text>
-          <Text style={styles.memberSince}>Impact Member</Text>
+          <Text style={styles.userName}>Alex Rivera</Text>
+          <Text style={styles.memberSince}>Impact Member since 2022</Text>
         </View>
 
         <View style={styles.content}>
@@ -71,55 +27,40 @@ export default function ProfileScreen() {
             <Text style={styles.sectionHeader}>Personal Information</Text>
             <View style={styles.card}>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>First Name</Text>
-                <TextInput
-                  style={[styles.input, focusedInput === 'firstName' && styles.inputFocused]}
-                  value={firstName}
-                  onChangeText={setFirstName}
-                  onFocus={() => setFocusedInput('firstName')}
-                  onBlur={() => setFocusedInput(null)}
-                />
-              </View>
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Last Name</Text>
-                <TextInput
-                  style={[styles.input, focusedInput === 'lastName' && styles.inputFocused]}
-                  value={lastName}
-                  onChangeText={setLastName}
-                  onFocus={() => setFocusedInput('lastName')}
+                <Text style={styles.inputLabel}>Full Name</Text>
+                <TextInput 
+                  style={[styles.input, focusedInput === 'fullName' && styles.inputFocused]} 
+                  value={fullName} 
+                  onChangeText={setFullName}
+                  onFocus={() => setFocusedInput('fullName')}
                   onBlur={() => setFocusedInput(null)}
                 />
               </View>
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Mobile Number</Text>
-                <TextInput
-                  style={[styles.input, focusedInput === 'phone' && styles.inputFocused]}
-                  value={phone}
-                  onChangeText={setPhone}
+                <TextInput 
+                  style={[styles.input, focusedInput === 'mobile' && styles.inputFocused]} 
+                  value={mobile} 
+                  onChangeText={setMobile}
                   keyboardType="phone-pad"
-                  onFocus={() => setFocusedInput('phone')}
+                  onFocus={() => setFocusedInput('mobile')}
                   onBlur={() => setFocusedInput(null)}
                 />
               </View>
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Email Address</Text>
-                <TextInput
-                  style={[styles.input, focusedInput === 'email' && styles.inputFocused]}
-                  value={profile?.email ?? ''}
-                  editable={false}
+                <TextInput 
+                  style={[styles.input, focusedInput === 'email' && styles.inputFocused]} 
+                  value={email} 
+                  onChangeText={setEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   onFocus={() => setFocusedInput('email')}
                   onBlur={() => setFocusedInput(null)}
                 />
               </View>
-              {saveError && (
-                <Text style={{ color: 'red', fontSize: 13, textAlign: 'center', fontFamily: 'Manrope_500Medium' }}>
-                  {saveError}
-                </Text>
-              )}
-              <TouchableOpacity style={styles.updateBtn} activeOpacity={0.8} onPress={handleSave} disabled={saving}>
-                <Text style={styles.updateBtnText}>{saving ? 'Saving...' : 'Update Profile'}</Text>
+              <TouchableOpacity style={styles.updateBtn} activeOpacity={0.8}>
+                <Text style={styles.updateBtnText}>Update Profile</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -174,10 +115,10 @@ export default function ProfileScreen() {
           </View>
 
           {/* Sign Out */}
-          <TouchableOpacity
-            style={styles.signOutBtn}
+          <TouchableOpacity 
+            style={styles.signOutBtn} 
             activeOpacity={0.8}
-            onPress={() => logout()}
+            onPress={() => router.replace('/(auth)/login')}
           >
             <MaterialSymbols name="logout" size={24} color="white" />
             <Text style={styles.signOutText}>Sign Out</Text>

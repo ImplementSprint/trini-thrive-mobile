@@ -17,7 +17,6 @@ const config: Config = {
     'hooks/use-theme-color.ts',
     'packages/ui/tokens.ts',
     'packages/mock-data/campaigns.ts',
-    'services/**/*.ts',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['json-summary', 'lcov', 'text', 'text-summary'],

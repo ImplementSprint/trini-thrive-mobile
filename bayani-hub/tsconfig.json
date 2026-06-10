@@ -5,32 +5,14 @@
     "allowJs": false,
     "noUncheckedIndexedAccess": true,
     "baseUrl": ".",
-    "types": [
-      "jest",
-      "node"
-    ],
+    "types": ["jest", "node"],
     "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@app/*": [
-        "src/bootstrap/*"
-      ],
-      "@config/*": [
-        "src/config/*"
-      ],
-      "@features/*": [
-        "src/features/*"
-      ],
-      "@navigation/*": [
-        "src/navigation/*"
-      ],
-      "@theme/*": [
-        "src/theme/*"
-      ],
-      "@utils/*": [
-        "src/utils/*"
-      ]
+      "@app/*": ["src/bootstrap/*"],
+      "@config/*": ["src/config/*"],
+      "@features/*": ["src/features/*"],
+      "@navigation/*": ["src/navigation/*"],
+      "@theme/*": ["src/theme/*"],
+      "@utils/*": ["src/utils/*"]
     }
   },
   "include": [
@@ -38,12 +20,8 @@
     "index.ts",
     "eslint.config.ts",
     "jest.config.ts",
-    "app",
     "src",
-    "assets",
     "tests",
-    "scripts",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "scripts"
   ]
 }

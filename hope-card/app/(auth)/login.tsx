@@ -5,7 +5,6 @@ import { colors, spacing, borderRadius } from '@digdon/ui';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { HButton } from '@/components/ui/HButton';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
-import { useAuth } from '../../hooks/useAuth';
 
 const { width, height } = Dimensions.get('window');
 
@@ -13,25 +12,6 @@ export default function LoginScreen() {
   const router = useRouter();
   const [showPassword, setShowPassword] = React.useState(false);
   const [focusedInput, setFocusedInput] = React.useState<string | null>(null);
-  const { login } = useAuth();
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-
-  async function handleLogin() {
-    if (!email || !password) return;
-    setLoading(true);
-    setError(null);
-    try {
-      await login(email, password);
-      router.replace('/(tabs)/home');
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Login failed');
-    } finally {
-      setLoading(false);
-    }
-  }
 
   return (
     <SafeLayout hideHeader>
@@ -72,13 +52,11 @@ export default function LoginScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email Address</Text>
               <View style={[styles.inputWrapper, focusedInput === 'email' && styles.inputWrapperFocused]}>
-                <TextInput
+                <TextInput 
                   style={styles.input}
                   placeholder="name@example.com"
                   placeholderTextColor={colors.outlineVariant}
                   keyboardType="email-address"
-                  value={email}
-                  onChangeText={setEmail}
                   onFocus={() => setFocusedInput('email')}
                   onBlur={() => setFocusedInput(null)}
                 />
@@ -93,13 +71,11 @@ export default function LoginScreen() {
                 </TouchableOpacity>
               </View>
               <View style={[styles.inputWrapper, focusedInput === 'password' && styles.inputWrapperFocused]}>
-                <TextInput
+                <TextInput 
                   style={styles.input}
                   placeholder="••••••••"
                   placeholderTextColor={colors.outlineVariant}
                   secureTextEntry={!showPassword}
-                  value={password}
-                  onChangeText={setPassword}
                   onFocus={() => setFocusedInput('password')}
                   onBlur={() => setFocusedInput(null)}
                 />
@@ -113,15 +89,9 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            {error && (
-              <Text style={{ color: 'red', fontSize: 13, textAlign: 'center', fontFamily: 'Manrope_500Medium' }}>
-                {error}
-              </Text>
-            )}
-            <HButton
-              title={loading ? 'Signing in...' : 'Sign In'}
-              onPress={handleLogin}
-              disabled={loading}
+            <HButton 
+              title="Sign In" 
+              onPress={() => router.push('/(tabs)/home')} 
               size="lg"
               style={styles.submitButton}
             />

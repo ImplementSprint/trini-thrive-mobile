@@ -5,31 +5,10 @@ import { colors, spacing } from '@digdon/ui';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { HButton } from '@/components/ui/HButton';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
-import { useAuth } from '../hooks/useAuth';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const [focusedInput, setFocusedInput] = React.useState<string | null>(null);
-  const { forgotPassword } = useAuth();
-  const [email, setEmail] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
-  const [sent, setSent] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-
-  async function handleSend() {
-    if (!email) return;
-    setLoading(true);
-    setError(null);
-    try {
-      await forgotPassword(email);
-      setSent(true);
-      router.push({ pathname: '/forgot-password-otp', params: { email } });
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to send OTP');
-    } finally {
-      setLoading(false);
-    }
-  }
 
   return (
     <SafeLayout hideHeader>
@@ -60,29 +39,21 @@ export default function ForgotPasswordScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email Address</Text>
               <View style={[styles.inputWrapper, focusedInput === 'email' && styles.inputWrapperFocused]}>
-                <TextInput
+                <TextInput 
                   style={styles.input}
                   placeholder="yourname@email.com"
                   placeholderTextColor={colors.outlineVariant}
                   keyboardType="email-address"
                   autoCapitalize="none"
-                  value={email}
-                  onChangeText={setEmail}
                   onFocus={() => setFocusedInput('email')}
                   onBlur={() => setFocusedInput(null)}
                 />
               </View>
             </View>
 
-            {error && (
-              <Text style={{ color: 'red', fontSize: 13, textAlign: 'center', fontFamily: 'Manrope_500Medium' }}>
-                {error}
-              </Text>
-            )}
-            <HButton
-              title={loading ? 'Sending...' : 'Send Reset Link'}
-              onPress={handleSend}
-              disabled={loading}
+            <HButton 
+              title="Send Reset Link" 
+              onPress={() => router.push('/forgot-password-otp')} 
               size="lg"
               style={styles.submitButton}
             />

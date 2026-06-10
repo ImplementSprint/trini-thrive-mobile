@@ -7,16 +7,10 @@ import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
 import { useRouter } from 'expo-router';
-import { useProfile } from '../../hooks/useProfile';
 
 export default function ImpactScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = React.useState('donations');
-  const { impactQuery } = useProfile();
-  const impact = impactQuery.data;
-  const TRAIN_LIMIT = 250000;
-  const donatedAmount = impact?.total_donations_amount ?? 0;
-  const donationsCount = impact?.total_donations_count ?? 0;
 
   const pointHistory = [
     {
@@ -126,16 +120,28 @@ export default function ImpactScreen() {
           <View style={styles.historyList}>
             {activeTab === 'donations' ? (
               <>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 16, backgroundColor: 'white', borderRadius: 20, borderWidth: 1, borderColor: 'rgba(27,28,27,0.05)' }}>
-                  <View style={{ alignItems: 'center' }}>
-                    <Text style={{ fontSize: 22, fontWeight: '800', color: colors.primary, fontFamily: 'PlusJakartaSans_800ExtraBold' }}>₱{donatedAmount.toLocaleString()}</Text>
-                    <Text style={{ fontSize: 12, color: colors.onSurfaceVariant, fontFamily: 'Manrope_500Medium' }}>Total Donated</Text>
-                  </View>
-                  <View style={{ alignItems: 'center' }}>
-                    <Text style={{ fontSize: 22, fontWeight: '800', color: colors.secondary, fontFamily: 'PlusJakartaSans_800ExtraBold' }}>{donationsCount}</Text>
-                    <Text style={{ fontSize: 12, color: colors.onSurfaceVariant, fontFamily: 'Manrope_500Medium' }}>Donations Made</Text>
-                  </View>
-                </View>
+                <HistoryItem
+                  title="Emergency Relief Fund"
+                  date="Oct 24, 2023"
+                  amount="₱14,250"
+                  status="Processed"
+                  icon="medical_services"
+                  isPrimary
+                />
+                <HistoryItem
+                  title="Rural Education Fund"
+                  date="Oct 12, 2023"
+                  amount="₱10,000"
+                  status="Processed"
+                  icon="school"
+                />
+                <HistoryItem
+                  title="Reforestation Project"
+                  date="Sep 28, 2023"
+                  amount="₱5,000"
+                  status="Processed"
+                  icon="forest"
+                />
               </>
             ) : (
               pointHistory.map((item) => (

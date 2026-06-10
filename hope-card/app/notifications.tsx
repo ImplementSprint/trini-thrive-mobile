@@ -1,15 +1,39 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, spacing } from '@digdon/ui';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
-import { useNotifications } from '../hooks/useNotifications';
 
 export default function NotificationsScreen() {
   const router = useRouter();
-  const { notificationsQuery, markRead } = useNotifications();
-  const notifications = notificationsQuery.data ?? [];
+
+  const notifications = [
+    {
+      id: '1',
+      title: 'Donation Successful',
+      message: 'Your donation to "Support Local Farmers" was successful.',
+      time: '2 hours ago',
+      icon: 'check_circle',
+      color: '#4CAF50',
+    },
+    {
+      id: '2',
+      title: 'New Achievement!',
+      message: 'You have earned the "Impact Starter" badge.',
+      time: '5 hours ago',
+      icon: 'auto_awesome',
+      color: '#FF9800',
+    },
+    {
+      id: '3',
+      title: 'Weekly Roundup',
+      message: 'See how your contributions made a difference this week.',
+      time: '1 day ago',
+      icon: 'redeem',
+      color: colors.primary,
+    },
+  ];
 
   return (
     <SafeLayout hideHeader>
@@ -27,32 +51,22 @@ export default function NotificationsScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {notificationsQuery.isLoading && (
-            <View style={{ padding: 32, alignItems: 'center' }}>
-              <ActivityIndicator color={colors.primary} />
-            </View>
-          )}
-
           {notifications.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.notificationCard, item.is_read && { opacity: 0.6 }]}
-              onPress={() => markRead.mutate(item.id)}
-            >
-              <View style={[styles.iconContainer, { backgroundColor: colors.primary + '1A' }]}>
-                <MaterialSymbols name="notifications" size={24} color={colors.primary} fill />
+            <TouchableOpacity key={item.id} style={styles.notificationCard}>
+              <View style={[styles.iconContainer, { backgroundColor: item.color + '1A' }]}>
+                <MaterialSymbols name={item.icon} size={24} color={item.color} fill />
               </View>
               <View style={styles.content}>
                 <View style={styles.row}>
                   <Text style={styles.notifTitle}>{item.title}</Text>
-                  <Text style={styles.notifTime}>{new Date(item.created_at).toLocaleDateString()}</Text>
+                  <Text style={styles.notifTime}>{item.time}</Text>
                 </View>
                 <Text style={styles.notifMessage}>{item.message}</Text>
               </View>
             </TouchableOpacity>
           ))}
 
-          {!notificationsQuery.isLoading && notifications.length === 0 && (
+          {notifications.length === 0 && (
             <View style={styles.emptyContainer}>
               <MaterialSymbols name="notifications_off" size={64} color={colors.outlineVariant} />
               <Text style={styles.emptyText}>No notifications yet</Text>
