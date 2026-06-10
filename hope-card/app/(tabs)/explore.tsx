@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ScrollView, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, spacing, borderRadius } from '@digdon/ui';
-import { campaigns } from '@digdon/mock-data/campaigns';
+import { useCampaigns } from '../../hooks/useCampaigns';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { CampaignCard } from '@/components/campaigns/CampaignCard';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
@@ -13,8 +13,20 @@ const CATEGORIES = ['All', 'Education', 'Health', 'Environment', 'Animal Rescue'
 export default function ExploreScreen() {
   const router = useRouter();
   const [activeCategory, setActiveCategory] = React.useState('All');
-  
-  const featuredCampaign = campaigns[0];
+  const [search, setSearch] = React.useState('');
+  const [debouncedSearch, setDebouncedSearch] = React.useState('');
+
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const { data: campaigns, isLoading, isError, refetch } = useCampaigns({
+    category: activeCategory,
+    search: debouncedSearch,
+  });
+
+  const featuredCampaign = campaigns?.[0];
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -42,10 +54,12 @@ export default function ExploreScreen() {
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
           <MaterialSymbols name="search" size={20} color="#F28D83" />
-          <TextInput 
+          <TextInput
             style={styles.searchInput}
             placeholder="Find causes you care about..."
             placeholderTextColor="#F28D83"
+            value={search}
+            onChangeText={setSearch}
           />
         </View>
       </View>
@@ -70,15 +84,16 @@ export default function ExploreScreen() {
         </ScrollView>
       </View>
 
+      {featuredCampaign && (
       <View style={styles.featuredSection}>
         <Text style={styles.sectionTitle}>Featured Campaign</Text>
-        <TouchableOpacity 
-          style={styles.featuredCard} 
+        <TouchableOpacity
+          style={styles.featuredCard}
           onPress={() => router.push(`/modal?id=${featuredCampaign.id}`)}
           activeOpacity={0.9}
         >
           <View style={styles.featuredImageContainer}>
-            <Image source={{ uri: featuredCampaign.image }} style={styles.featuredImage} />
+            <Image source={{ uri: featuredCampaign.cover_image_url ?? undefined }} style={styles.featuredImage} />
             <View style={styles.featuredGradient} />
             <View style={styles.featuredBadge}>
               <Text style={styles.featuredBadgeText}>FEATURED</Text>
@@ -92,17 +107,17 @@ export default function ExploreScreen() {
             <Text style={styles.featuredDescription} numberOfLines={2}>
               {featuredCampaign.description}
             </Text>
-            
+
             <View style={styles.featuredStats}>
               <View style={styles.featuredProgressRow}>
                 <Text style={styles.featuredRaisedText}>
-                  ₱{featuredCampaign.raised.toLocaleString()} <Text style={styles.featuredGoalLabel}>raised</Text>
+                  ₱{featuredCampaign.collected_amount.toLocaleString()} <Text style={styles.featuredGoalLabel}>raised</Text>
                 </Text>
-                <Text style={styles.featuredPercentText}>82%</Text>
+                <Text style={styles.featuredPercentText}>{Math.round(featuredCampaign.progress_pct)}%</Text>
               </View>
-              <ProgressBar progress={0.82} height={8} />
+              <ProgressBar progress={featuredCampaign.progress_pct / 100} height={8} />
               <View style={styles.featuredActionRow}>
-                <Text style={styles.featuredGoalText}>Goal: ₱1,000,000</Text>
+                <Text style={styles.featuredGoalText}>Goal: ₱{featuredCampaign.target_amount.toLocaleString()}</Text>
                 <View style={styles.donateNowButton}>
                   <Text style={styles.donateNowText}>Donate Now</Text>
                 </View>
@@ -111,6 +126,7 @@ export default function ExploreScreen() {
           </View>
         </TouchableOpacity>
       </View>
+      )}
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Discovered more</Text>
@@ -121,17 +137,27 @@ export default function ExploreScreen() {
   return (
     <SafeLayout>
       <FlatList
-        data={campaigns.slice(1)}
+        data={(campaigns ?? []).slice(1)}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <CampaignCard 
-            campaign={item} 
+          <CampaignCard
+            campaign={item}
             onPress={(id) => router.push(`/modal?id=${id}`)}
           />
         )}
         ListHeaderComponent={renderHeader}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          isLoading ? (
+            <Text style={{ textAlign: 'center', color: colors.onSurfaceVariant, padding: 32, fontFamily: 'Manrope_500Medium' }}>Loading campaigns...</Text>
+          ) : isError ? (
+            <View style={{ alignItems: 'center', padding: 32, gap: 12 }}>
+              <Text style={{ color: colors.onSurfaceVariant, fontFamily: 'Manrope_500Medium' }}>Failed to load campaigns</Text>
+              <TouchableOpacity onPress={() => refetch()}><Text style={{ color: colors.primary, fontWeight: '700' }}>Retry</Text></TouchableOpacity>
+            </View>
+          ) : null
+        }
       />
     </SafeLayout>
   );

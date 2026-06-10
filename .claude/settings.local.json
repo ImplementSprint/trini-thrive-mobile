@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__list_tables",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "Bash(npx expo *)",
+      "Bash(npm install *)",
+      "Bash(npm view *)",
+      "Bash(npx jest *)",
+      "Bash(npx tsc *)",
+      "Bash(npm test *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\arjel\\\\Downloads\\\\trini-thrive-mobile\\\\hope-card\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\arjel\\\\Downloads\\\\trini-thrive-mobile\\\\hope-card\\\\services\" -ErrorAction SilentlyContinue)",
+      "Bash(npm run *)",
+      "Bash(echo \"EXIT_CODE:$?\")"
+    ]
+  }
+}

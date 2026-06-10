@@ -1,12 +1,42 @@
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, Dimensions } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, Dimensions, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, spacing, borderRadius } from '@digdon/ui';
 import { SafeLayout } from '@/components/layout/SafeLayout';
 import { MaterialSymbols } from '@/components/ui/MaterialSymbols';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { useCart } from '../../hooks/useCart';
+import { useProfile } from '../../hooks/useProfile';
 
 export default function WalletScreen() {
   const router = useRouter();
+  const { cartQuery, updateItem, removeItem } = useCart();
+  const { profileQuery } = useProfile();
+  const cart = cartQuery.data;
+  const profile = profileQuery.data;
+
+  const TRAIN_LIMIT = 250000;
+  const usedAmount = profile?.total_donations_amount ?? 0;
+  const trainPct = usedAmount / TRAIN_LIMIT;
+  const trainRemaining = TRAIN_LIMIT - usedAmount;
+
+  const subtotal = (cart?.items ?? []).reduce(
+    (sum, item) => sum + item.face_value * item.quantity,
+    0,
+  );
+  const processingFee = Math.round(subtotal * 0.02);
+  const total = subtotal + processingFee;
+
+  if (cartQuery.isLoading) {
+    return (
+      <SafeLayout>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      </SafeLayout>
+    );
+  }
+
   return (
     <SafeLayout>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
@@ -21,20 +51,22 @@ export default function WalletScreen() {
 
         {/* Cart Items Canvas */}
         <View style={styles.cartCanvas}>
-          <CartItem 
-            title="Rural Education Fund" 
-            desc="Providing learning materials to remote schools."
-            amount="₱5,000"
-            qty="01"
-            image="https://lh3.googleusercontent.com/aida-public/AB6AXuCcN6aO6k8i0tGZje8dKYqsfZR8ga2km2XWGaoATgdUFXJiqRcdzCBMQ_TMDAGYSNObIsGWv_lMj2nxDPPTJJ-AxJhllaXeiSLO7_leNT9LmOctY64d10L9BDgMR_W0q6n5JInh5pFgNGBiOdjHMtWwO94T2O_Kpfyp50mjajiOvCjF31RbfqdyQPyFYx-V5beI_WTi-AE7q08daPS-dYfPw3keOlywM75jo4c94mnI4LY7WH192wztjUfqT1HFe65R2_yTxqPLyKrC"
-          />
-          <CartItem 
-            title="Reforestation Project" 
-            desc="Planting indigenous trees in the Sierra Madre."
-            amount="₱2,500"
-            qty="02"
-            image="https://lh3.googleusercontent.com/aida-public/AB6AXuBfKhEbtswrQdMfeP9QStKV3tD3cy185EPUA7jQxJ82yuisQO_m52qTmJTo-X_BDEZ4iGwnNr3cCO64AHBlS1NY7lRQdeX7rGe93sJk_a817CgGWNkFQwycHZ3bPjqa38TzPuDipyNt-JeGJlwTUF_MtnFRAGMi7l_fVLHuqaMCKsPAeB-HAIb3TaR76i3Ngj0LoNIeYQjNFozI8A7i3S_DgkIiH1Yn_2NbrAyOBLlV0ByB04fuT3CpzZz6kyBgeyV5fslWM6ENceKB"
-          />
+          {(cart?.items ?? []).map((item) => (
+            <CartItem
+              key={item.id}
+              title={item.campaign.title}
+              desc=""
+              amount={`₱${item.face_value.toLocaleString()}`}
+              qty={String(item.quantity).padStart(2, '0')}
+              image={item.campaign.cover_image_url ?? undefined}
+              onIncrement={() => updateItem.mutate({ itemId: item.id, quantity: item.quantity + 1 })}
+              onDecrement={() => updateItem.mutate({ itemId: item.id, quantity: Math.max(1, item.quantity - 1) })}
+              onRemove={() => removeItem.mutate(item.id)}
+            />
+          ))}
+          {(cart?.items ?? []).length === 0 && (
+            <Text style={{ textAlign: 'center', color: colors.onSurfaceVariant, padding: 32, fontFamily: 'Manrope_500Medium' }}>Your cart is empty.</Text>
+          )}
         </View>
 
         {/* Summary & Impact Canvas */}
@@ -48,11 +80,11 @@ export default function WalletScreen() {
             <View style={styles.taxStats}>
               <View style={styles.statRow}>
                 <Text style={styles.statLabel}>Annual Tax-Deductible Limit</Text>
-                <Text style={styles.statLimit}>₱250,000</Text>
+                <Text style={styles.statLimit}>₱{TRAIN_LIMIT.toLocaleString()}</Text>
               </View>
-              <ProgressBar progress={0.06} height={10} />
+              <ProgressBar progress={trainPct} height={10} />
               <Text style={styles.usageText}>
-                ₱15,000 <Text style={styles.activeUsage}>of ₱250,000 used</Text>
+                ₱{usedAmount.toLocaleString()} <Text style={styles.activeUsage}>of ₱{TRAIN_LIMIT.toLocaleString()} used</Text>
               </Text>
             </View>
             <Text style={styles.taxNote}>
@@ -66,16 +98,16 @@ export default function WalletScreen() {
             <View style={styles.summaryRows}>
               <View style={styles.summaryRow}>
                 <Text style={styles.rowLabel}>Subtotal</Text>
-                <Text style={styles.rowValue}>₱10,000</Text>
+                <Text style={styles.rowValue}>₱{subtotal.toLocaleString()}</Text>
               </View>
               <View style={styles.summaryRow}>
                 <Text style={styles.rowLabel}>Processing Fee</Text>
-                <Text style={styles.rowValue}>₱0.00</Text>
+                <Text style={styles.rowValue}>₱{processingFee.toLocaleString()}</Text>
               </View>
               <View style={styles.divider} />
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Total</Text>
-                <Text style={styles.totalValue}>₱10,000</Text>
+                <Text style={styles.totalValue}>₱{total.toLocaleString()}</Text>
               </View>
             </View>
 
@@ -98,7 +130,7 @@ export default function WalletScreen() {
   );
 }
 
-function CartItem({ title, desc, amount, qty, image }: any) {
+function CartItem({ title, desc, amount, qty, image, onIncrement, onDecrement, onRemove }: any) {
   return (
     <View style={styles.cartItem}>
       <View style={styles.itemMainRow}>
@@ -107,23 +139,23 @@ function CartItem({ title, desc, amount, qty, image }: any) {
           <View style={styles.itemHeader}>
             <View style={styles.itemTitleGroup}>
               <Text style={styles.itemTitle}>{title}</Text>
-              <Text style={styles.itemDesc} numberOfLines={1}>{desc}</Text>
+              {!!desc && <Text style={styles.itemDesc} numberOfLines={1}>{desc}</Text>}
             </View>
             <Text style={styles.itemAmount}>{amount}</Text>
           </View>
-          
+
           <View style={styles.itemActions}>
             <View style={styles.qtyControl}>
-              <TouchableOpacity style={styles.qtyBtn}>
+              <TouchableOpacity style={styles.qtyBtn} onPress={onDecrement}>
                 <MaterialSymbols name="remove" size={20} color={colors.onSurfaceVariant} />
               </TouchableOpacity>
               <Text style={styles.qtyText}>{qty}</Text>
-              <TouchableOpacity style={styles.qtyBtn}>
+              <TouchableOpacity style={styles.qtyBtn} onPress={onIncrement}>
                 <MaterialSymbols name="add" size={20} color={colors.onSurfaceVariant} />
               </TouchableOpacity>
             </View>
-            
-            <TouchableOpacity style={styles.removeBtn}>
+
+            <TouchableOpacity style={styles.removeBtn} onPress={onRemove}>
               <MaterialSymbols name="delete" size={18} color={colors.error} />
               <Text style={styles.removeText}>Remove</Text>
             </TouchableOpacity>
