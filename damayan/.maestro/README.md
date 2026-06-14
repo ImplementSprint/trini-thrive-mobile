@@ -1,11 +1,11 @@
-# Maestro Starter Flows
+# Damayan Maestro Flows
 
-This template ships with platform-specific smoke flows:
+Damayan ships with platform-specific smoke flows:
 
 - smoke-android.yaml
 - smoke-ios.yaml
 
-Before first release, update appId values when you change package identifiers.
+The app IDs mirror `app.config.ts`.
 
 Run flows:
 
